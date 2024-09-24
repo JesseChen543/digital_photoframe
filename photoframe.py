@@ -175,8 +175,8 @@ class PhotoFrameApp:
                     # Show an error popup
                     messagebox.showerror("Invalid Time", "Start time cannot be later than or equal to the end time.")
                 else:
-                    # If valid, show a success message (optional)
-                    messagebox.showinfo("Valid Time", "The selected times are valid.")
+                    # If valid, close the popup window
+                    popup.destroy()
             except ValueError:
                 # Handle the case where the input is not a valid time format
                 messagebox.showerror("Invalid Input", "Please select valid times.")
