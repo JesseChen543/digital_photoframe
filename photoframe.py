@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Frame
 from tkinter.simpledialog import askstring
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw
 import datetime
 from datetime import datetime
 from tkcalendar import Calendar  
@@ -36,9 +36,9 @@ class PhotoFrameApp:
         bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
         icon_image_path = "pictures/detail_icon.png"
-        icon = Image.open(icon_image_path)
-        icon = icon.resize((30, 30), Image.LANCZOS)
-        icon_image = ImageTk.PhotoImage(icon)
+        # Make the icon round
+        round_icon = self.make_round_image(icon_image_path)
+        icon_image = ImageTk.PhotoImage(round_icon)
 
         icon_button = tk.Button(self.root, image=icon_image, command=self.show_popup, borderwidth=0)
         icon_button.image = icon_image
@@ -50,12 +50,31 @@ class PhotoFrameApp:
         self.root.geometry(f"{self.screen_width}x{self.screen_height}")
         self.root.bind('<Escape>', self.quit_app)
 
+    # Function to make the image round with transparency
+    def make_round_image(self, image_path, size=(30, 30)):
+        # Open the image and resize it
+        image = Image.open(image_path).resize(size, Image.LANCZOS)
+
+        # Ensure the image has an alpha channel for transparency
+        image = image.convert("RGBA")
+
+        # Create a mask for a circular shape
+        mask = Image.new('L', size, 0)  # 'L' mode for grayscale (black and white)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0) + size, fill=255)  # Draw a white filled circle on the mask
+
+        # Apply the mask to the image to make it round
+        result = Image.new("RGBA", size)  # Create a new image with transparency
+        result.paste(image, (0, 0), mask)  # Paste the image using the circular mask as the alpha channel
+
+        return result
+
     def show_popup(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = tk.Toplevel(self.root)
             self.popup_window.configure(bg='white')
-            popup_width = int(self.screen_width * 0.66)
-            popup_height = int(self.screen_height * 0.66)
+            popup_width = 290
+            popup_height = 390
             self.popup_window.geometry(f"{popup_width}x{popup_height}")
 
             title_close_frame = Frame(self.popup_window, bg="white")
@@ -87,7 +106,7 @@ class PhotoFrameApp:
             note_entry.insert("1.0", self.saved_note_value)
 
             submit_button = tk.Button(self.popup_window, text="Upload", bg="#5081FF", fg="white", font=("Helvetica", 10), relief="flat")
-            submit_button.pack(pady=10)
+            submit_button.pack(anchor="e", padx=10, pady=10)
 
             inner_frame.grid_columnconfigure(1, weight=1)
             inner_frame.grid_rowconfigure(2, weight=1)
@@ -96,12 +115,12 @@ class PhotoFrameApp:
     def pick_date(self):
         """Display the date and time picker popup similar to the provided screenshot."""
         popup = tk.Toplevel(self.root)
-        popup.geometry("300x250")
+        popup.geometry("270x206")
         popup.configure(bg='white')
 
         # Title Label
         title_label = tk.Label(popup, text="Week", font=("Helvetica", 14), bg="white")
-        title_label.pack(pady=10)
+        title_label.pack(pady=5)
 
         # Days of the week grid
         days_frame = tk.Frame(popup, bg="white")
@@ -135,14 +154,14 @@ class PhotoFrameApp:
 
         # Time selection area
         time_frame = tk.Frame(popup, bg="white")
-        time_frame.pack(pady=10)
+        time_frame.pack(pady=5)
 
         # Create a list of times (you can adjust the range as needed)
         time_options = [f"{h:02d}:00" for h in range(0, 24)]  # Generates times from 00:00 to 23:00
 
         # Time selection area
         time_frame = tk.Frame(popup, bg="white")
-        time_frame.pack(pady=10)
+        time_frame.pack(anchor="w", padx=5, pady=10)
 
         tk.Label(time_frame, text="Time", bg="white", font=("Helvetica", 10)).grid(row=0, column=0, padx=5)
 
@@ -183,7 +202,7 @@ class PhotoFrameApp:
 
         # Confirm button
         confirm_button = tk.Button(popup, text="Confirm", bg="#5081FF", fg="white", font=("Helvetica", 10), relief="flat", command=validate_time)
-        confirm_button.pack(pady=10)
+        confirm_button.pack(padx=5, pady=10, anchor = "e")
 
     def quit_app(self, event=None):
         self.root.quit()
