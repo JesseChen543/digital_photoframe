@@ -10,15 +10,23 @@ PICKDATE_HEIGHT = 206
 
 # File paths
 LOGO_IMAGE_PATH = "pictures/logo1 2.png"
-ICON_IMAGE_PATH = "pictures/detail_icon.png"
+WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
 BACKGROUND_IMAGE_PATH = "pictures/photoframe3.png"
 
 # Colors
+LANDING_BG_COLOR = "#5081FF"
+LANDING_FG_COLOR = "#FFFFFF"
+QR_BG_COLOR = "#FFFFFF"
+QR_LOGO_COLOR = "#2C2C2C"
+QR_TEXT_COLOR = "#000000"
 BUTTON_COLOR = "#5081FF"
-BUTTON_TEXT_COLOR = "white"
-POPUP_BG_COLOR = "white"
+BUTTON_TEXT_COLOR = "#FFFFFF"
+POPUP_BG_COLOR = "#FFFFFF"
 
 # Font styles
+FONT_LOGO = ("Pacifico", 30)
+FONT_LANDING = ("DM Sans", 12)
+FONT_QR_TEXT = ("Overpass", 12)
 FONT_LARGE = ("Inter", 16)
 FONT_MEDIUM = ("Inter", 12)
 FONT_SMALL = ("Inter", 9)

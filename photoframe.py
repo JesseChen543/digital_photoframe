@@ -24,46 +24,30 @@ class PhotoFrameApp:
         # Keep track of the popup window
         self.popup_window = None
 
-        # Set screen dimensions
-        self.screen_width = SCREEN_WIDTH
-        self.screen_height = SCREEN_HEIGHT
-
         # Load and display the full-screen image (replace with backend)
         image_path = BACKGROUND_IMAGE_PATH
         image = Image.open(image_path)
         #resize the image
-        image = image.resize((self.screen_width, self.screen_height), Image.LANCZOS)
+        image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
         bg_image = ImageTk.PhotoImage(image)
 
         bg_label = tk.Label(self.root, image=bg_image)
         bg_label.image = bg_image
         bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-        icon_image_path = ICON_IMAGE_PATH
         # Make the icon round (not functional yet)
-        round_icon = self.make_round_image(icon_image_path)
+        round_icon = Image.open(WRITE_NOTE_ICON_IMAGE_PATH).resize((30,30), Image.LANCZOS)
         icon_image = ImageTk.PhotoImage(round_icon)
 
         icon_button = tk.Button(self.root, image=icon_image, command=self.show_note, borderwidth=0)
         icon_button.image = icon_image
-        icon_button.place(x=self.screen_width - 60, y=10)
+        icon_button.place(x=SCREEN_WIDTH - 60, y=10)
 
         # Initialize selected_day_button as None
         self.selected_day_button = None  
 
-        self.root.geometry(f"{self.screen_width}x{self.screen_height}")
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         self.root.bind('<Escape>', self.quit_app)
-
-    # Function to make the image round with transparency (not functional yet)
-    def make_round_image(self, image_path, size=(30, 30)):
-        image = Image.open(image_path).resize(size, Image.LANCZOS)
-        image = image.convert("RGBA")
-        mask = Image.new('L', size, 0)
-        draw = ImageDraw.Draw(mask)
-        draw.ellipse((0, 0) + size, fill=255)
-        result = Image.new("RGBA", size)
-        result.paste(image, (0, 0), mask)
-        return result
 
     def show_note(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
@@ -148,7 +132,7 @@ class PhotoFrameApp:
         end_time_combobox.grid(row=0, column=3, padx=5)
         end_time_combobox.set("12:00")
 
-        #update below if we only need one time
+        #update below if we only need one time 
         def validate_time():
             start_time = start_time_combobox.get()
             end_time = end_time_combobox.get()
