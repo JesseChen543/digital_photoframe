@@ -3,6 +3,8 @@ from tkinter import PhotoImage
 from PIL import Image, ImageTk
 from constant import *
 from QRCodePage import QRCodePage
+import time 
+import threading
 
 class SplashScreenApp:
     def __init__(self, root):
@@ -44,7 +46,21 @@ class SplashScreenApp:
         self.root.bind("<Button-1>", self.start_action)
 
     def start_action(self, event):
-        # Destroy the current window and open the QR Code page
+        # Show loading label
+        loading_label = tk.Label(self.root, text="Loading...", font=("Arial", 14), bg="#5081FF", fg="white")
+        loading_label.pack()
+
+        # Run the API call on a separate thread
+        threading.Thread(target=self.load_qr_page).start()
+
+    def load_qr_page(self):
+        # Simulate API call delay
+        time.sleep(2)  # Replace this with the actual API call (e.g., fetching the QR code)
+
+        # After the API call is complete, destroy the current window and open the QR Code page
+        self.root.after(0, self.open_qr_page)  # Schedule the next step on the main thread
+
+    def open_qr_page(self):
         self.root.destroy()  # Close current window
         new_root = tk.Tk()  # Create a new root window
         QRCodePage(new_root)  # Call the QRCodePage class
