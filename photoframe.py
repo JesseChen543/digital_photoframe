@@ -30,13 +30,26 @@ class PhotoFrameApp:
         bg_label.image = bg_image
         bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-        # Make the icon round (not functional yet)
-        round_icon = Image.open(WRITE_NOTE_ICON_IMAGE_PATH).resize((30,30), Image.LANCZOS)
+        # Add add-note icon 
+        round_icon = Image.open(WRITE_NOTE_ICON_IMAGE_PATH).resize((30, 30), Image.LANCZOS)
         icon_image = ImageTk.PhotoImage(round_icon)
-
         icon_button = tk.Button(self.root, image=icon_image, command=self.note_popup.show_note, borderwidth=0)
         icon_button.image = icon_image
         icon_button.place(x=SCREEN_WIDTH - 60, y=10)
+
+        # Add upcoming schedule icon
+        calendar_icon = Image.open(UPCOMING_SCHEDULE_ICON).resize((30, 30), Image.LANCZOS)
+        calendar_image = ImageTk.PhotoImage(calendar_icon)
+        calendar_button = tk.Button(self.root, image=calendar_image, borderwidth=0)
+        calendar_button.image = calendar_image
+        calendar_button.place(x=10, y=10)
+
+        # Add list icon
+        list_icon = Image.open(LIST_ICON).resize((30, 30), Image.LANCZOS)
+        list_image = ImageTk.PhotoImage(list_icon)
+        list_button = tk.Button(self.root, image=list_image, borderwidth=0)
+        list_button.image = list_image
+        list_button.place(x=10, y=60)
 
         self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         self.root.bind('<Escape>', self.quit_app)

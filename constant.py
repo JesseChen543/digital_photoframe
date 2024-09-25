@@ -12,6 +12,8 @@ PICKDATE_HEIGHT = 206
 LOGO_IMAGE_PATH = "pictures/logo1 2.png"
 WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
 BACKGROUND_IMAGE_PATH = "pictures/photoframe3.png"
+UPCOMING_SCHEDULE_ICON = "pictures/upcoming_schedule.png"
+LIST_ICON = "pictures/list.png"
 
 # Colors
 LANDING_BG_COLOR = "#5081FF"

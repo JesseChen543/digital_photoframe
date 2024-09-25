@@ -39,13 +39,18 @@ class QRCodePage:
         qr_label.image = qr_code
         qr_label.pack(pady=20)
 
-        # Instruction Label using Overpass font
-        instruction_label = tk.Label(self.root, text="Scan the QR Code to pair", font=FONT_QR_TEXT, bg=QR_BG_COLOR, fg=QR_TEXT_COLOR)
+        # Instruction Label 
+        instruction_label = tk.Label(self.root, text="Scan the QR Code to pair", font=(FONT_QR_TEXT[0], FONT_QR_TEXT[1], "bold"), bg=QR_BG_COLOR, fg=QR_TEXT_COLOR)
         instruction_label.pack(pady=20)
 
     def generate_qr_code(self):
         """Fetch the QR code from an online API and return as a PhotoImage."""
-        qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=InSyncPairingCode"
+        # Replace 'myapp' with your app's URL scheme or direct app store URL
+        app_url = "myapp://open"  
+        # app_url = "https://play.google.com/store/apps/details?id=com.example.myapp"  # Example Play Store URL
+
+        # Generate QR code with the app URL
+        qr_api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={app_url}"
         response = requests.get(qr_api_url)
         img_data = response.content
 
@@ -54,6 +59,7 @@ class QRCodePage:
         qr_image = ImageTk.PhotoImage(img)
 
         return qr_image
+
 
 if __name__ == "__main__":
     root = tk.Tk()

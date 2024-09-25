@@ -24,8 +24,7 @@ class SplashScreenApp:
         inner_frame.pack()
 
         # Load logo image
-        logo_image_path = "pictures/logo1 2.png"
-        logo_img = Image.open(logo_image_path)
+        logo_img = Image.open(LOGO_IMAGE_PATH)
         logo_img = logo_img.resize((84, 88), Image.LANCZOS)
         logo_image = ImageTk.PhotoImage(logo_img)
 
@@ -47,7 +46,7 @@ class SplashScreenApp:
 
     def start_action(self, event):
         # Show loading label
-        loading_label = tk.Label(self.root, text="Loading...", font=("Arial", 14), bg="#5081FF", fg="white")
+        loading_label = tk.Label(self.root, text="Loading...", font=FONT_LANDING, bg=LANDING_BG_COLOR, fg=LANDING_FG_COLOR)
         loading_label.pack()
 
         # Run the API call on a separate thread
@@ -55,16 +54,19 @@ class SplashScreenApp:
 
     def load_qr_page(self):
         # Simulate API call delay
-        time.sleep(2)  # Replace this with the actual API call (e.g., fetching the QR code)
-
-        # After the API call is complete, destroy the current window and open the QR Code page
-        self.root.after(0, self.open_qr_page)  # Schedule the next step on the main thread
+        time.sleep(2)  
+        # After the API call is complete, open the QR Code page
+        self.root.after(0, self.open_qr_page)
 
     def open_qr_page(self):
-        self.root.destroy()  # Close current window
-        new_root = tk.Tk()  # Create a new root window
-        QRCodePage(new_root)  # Call the QRCodePage class
-        new_root.mainloop()
+        # Open the QR Code page in a new class
+        new_window = tk.Toplevel(self.root)
+        QRCodePage(new_window)  # Pass the new window to the QRCodePage class
+
+        # Hide the main window
+        self.root.withdraw()
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
