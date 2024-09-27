@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, Frame
 from tkinter import messagebox
 from datetime import datetime
+from PIL import Image, ImageTk
 from constant import *
 
 class NotePopup:
@@ -59,14 +60,21 @@ class NotePopup:
     def pick_date(self):
         popup = tk.Toplevel(self.root)
         popup.configure(bg=POPUP_BG_COLOR)
-        title_label = tk.Label(popup, text="Week", font=FONT_LARGE, bg=POPUP_BG_COLOR)
-        title_label.pack(pady=5)
 
+        # Configure the grid for the popup window to align everything to the left
+        popup.grid_columnconfigure(0, weight=1)
+
+        # Title Label (Aligned left)
+        title_label = tk.Label(popup, text="Week", font=FONT_LARGE, bg=POPUP_BG_COLOR)
+        title_label.grid(row=0, column=0, sticky='w', padx=10, pady=5)  # Align to left
+
+        # Days of the week
         days_frame = tk.Frame(popup, bg=POPUP_BG_COLOR)
-        days_frame.pack()
+        days_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')  # Align left
         days_of_week = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        
         for i, day in enumerate(days_of_week):
-            tk.Label(days_frame, text=day, bg="white", font=FONT_MEDIUM).grid(row=0, column=i, padx=5, pady=5)
+            tk.Label(days_frame, text=day, bg="white", font=FONT_MEDIUM).grid(row=0, column=i, padx=5, pady=5, sticky='w')
 
         def select_day(button, day):
             if self.selected_day_button:
@@ -76,38 +84,63 @@ class NotePopup:
             print(f"Selected day: {day}")
 
         for i in range(1, 8):
-            day_button = tk.Button(days_frame, text=str(i), bg=POPUP_BG_COLOR, font=FONT_MEDIUM, width=2, height=1)
+            day_button = tk.Button(
+                days_frame, 
+                text=str(i), 
+                bg=POPUP_BG_COLOR, 
+                font=FONT_MEDIUM, 
+                width=2, 
+                height=1, 
+                borderwidth=0,       
+                highlightthickness=0  
+            )
             day_button.grid(row=1, column=i-1, padx=5, pady=5)
             day_button.config(command=lambda b=i, btn=day_button: select_day(btn, b))
 
+        # Time selection frame with icon and time dropdown
         time_frame = tk.Frame(popup, bg=POPUP_BG_COLOR)
-        time_frame.pack(pady=5)
+        time_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
 
-        tk.Label(time_frame, text="Time", bg=POPUP_BG_COLOR, font=FONT_MEDIUM).grid(row=0, column=0, padx=5)
+        # Custom frame to hold the Combobox and icon together
+        combobox_with_icon_frame = tk.Frame(time_frame, bg=POPUP_BG_COLOR)
+        combobox_with_icon_frame.grid(row=0, column=2, padx=0, pady=5)
 
-        start_time_combobox = ttk.Combobox(time_frame, values=TIME_OPTIONS, font=FONT_MEDIUM, width=5)
-        start_time_combobox.grid(row=0, column=1, padx=5)
-        start_time_combobox.set("08:00")
+        # Time Combobox
+        End_time_combobox = ttk.Combobox(combobox_with_icon_frame, values=TIME_OPTIONS, font=FONT_MEDIUM, width=8)
+        End_time_combobox.grid(row=0, column=0, padx=(0, 5))
+        End_time_combobox.set("12:00")
 
-        tk.Label(time_frame, text="to", bg=POPUP_BG_COLOR, font=FONT_MEDIUM).grid(row=0, column=2, padx=5)
+        # Time icon (loaded from file)
+        time_icon_image = Image.open("pictures/time_logo.png")
+        time_icon_image = time_icon_image.resize((20, 20), Image.LANCZOS)
+        time_icon_photo = ImageTk.PhotoImage(time_icon_image)
 
-        end_time_combobox = ttk.Combobox(time_frame, values=TIME_OPTIONS, font=FONT_MEDIUM, width=5)
-        end_time_combobox.grid(row=0, column=3, padx=5)
-        end_time_combobox.set("12:00")
+        # Create a button for the time icon and place it next to the combobox
+        time_icon_button = tk.Button(combobox_with_icon_frame, image=time_icon_photo, bg=POPUP_BG_COLOR, relief="flat", bd=0)
+        time_icon_button.grid(row=0, column=1, padx=(0, 5))
+
+        # Label for the 'End' next to the combobox
+        tk.Label(time_frame, text="End", bg=POPUP_BG_COLOR, font=FONT_MEDIUM).grid(row=0, column=0, padx=(5, 0), sticky='w')
+
+        # Confirm Button (use grid)
+        confirm_button = tk.Button(popup, text="Confirm", bg=BUTTON_COLOR, fg="white", font=FONT_MEDIUM, relief="flat")
+        confirm_button.grid(row=3, column=0, pady=10, padx=10, sticky='e')  
 
         def validate_time():
-            start_time = start_time_combobox.get()
-            end_time = end_time_combobox.get()
+            end_time = End_time_combobox.get()
             fmt = "%H:%M"
             try:
-                start_dt = datetime.strptime(start_time, fmt)
+                # Get the current system time
+                current_time = datetime.now().strftime(fmt)
+                current_dt = datetime.strptime(current_time, fmt)
+                
+                # Convert the selected end time
                 end_dt = datetime.strptime(end_time, fmt)
-                if start_dt >= end_dt:
-                    messagebox.showerror("Invalid Time", "Start time cannot be later than or equal to the end time.")
+                
+                # Validate if the end time is earlier than the current system time
+                if end_dt <= current_dt:
+                    messagebox.showerror("Invalid Time", "End time cannot be earlier than the current system time.")
                 else:
-                    popup.destroy()
+                    popup.destroy()  # Close the popup if valid time
             except ValueError:
                 messagebox.showerror("Invalid Input", "Please select valid times.")
-
-        confirm_button = tk.Button(popup, text = "Confirm", bg = BUTTON_COLOR, fg = BUTTON_TEXT_COLOR, font = FONT_MEDIUM, relief = "flat", command = validate_time) 
-        confirm_button.pack(padx=5, pady=10, anchor="e")

@@ -1,55 +1,64 @@
-from tkinter import *
 import tkinter as tk
-import tkinter.font as font
+from PIL import Image, ImageTk
+from constant import *
 
-class RoundedButton(tk.Canvas):
-  def __init__(self, parent, border_radius, padding, color, text='', command=None):
-    tk.Canvas.__init__(self, parent, borderwidth=0,
-                       relief="raised", highlightthickness=0, bg=parent["bg"])
-    self.command = command
-    font_size = 10
-    self.font = font.Font(size=font_size, family='Helvetica')
-    self.id = None
-    height = font_size + (1 * padding)
-    width = self.font.measure(text)+(1*padding)
+class CanvasButton:
+    """ Create a leftmost mouse button clickable canvas image object.
 
-    width = width if width >= 80 else 80
+    The x, y coordinates are relative to the top-left corner of the canvas.
+    """
+    flash_delay = 100  # Milliseconds.
 
-    if border_radius > 0.5*width:
-      print("Error: border_radius is greater than width.")
-      return None
+    def __init__(self, canvas, x, y, image_path, command, size=ICON_DIMENSION, state=tk.NORMAL):
+        self.canvas = canvas
+        # Resize the image using PIL and convert to PhotoImage
+        image = Image.open(image_path).resize(size, Image.LANCZOS)
+        self.btn_image = ImageTk.PhotoImage(image)
 
-    if border_radius > 0.5*height:
-      print("Error: border_radius is greater than height.")
-      return None
+        self.canvas_btn_img_obj = canvas.create_image(x, y, anchor='nw', state=state,
+                                                      image=self.btn_image)
+        canvas.tag_bind(self.canvas_btn_img_obj, "<ButtonRelease-1>",
+                        lambda event: (self.flash(), command()))
 
-    rad = 2*border_radius
+    def flash(self):
+        self.set_state(tk.HIDDEN)
+        self.canvas.after(self.flash_delay, self.set_state, tk.NORMAL)
 
-    def shape():
-      self.create_arc((0, rad, rad, 0),
-                      start=90, extent=90, fill=color, outline=color)
-      self.create_arc((width-rad, 0, width,
-                        rad), start=0, extent=90, fill=color, outline=color)
-      self.create_arc((width, height-rad, width-rad,
-                        height), start=270, extent=90, fill=color, outline=color)
-      self.create_arc((0, height-rad, rad, height), start=180, extent=90, fill=color, outline=color)
-      return self.create_polygon((0, height-border_radius, 0, border_radius, border_radius, 0, width-border_radius, 0, width,
-                           border_radius, width, height-border_radius, width-border_radius, height, border_radius, height),
-                                 fill=color, outline=color)
+    def set_state(self, state):
+        """ Change canvas button image's state.
 
-    id = shape()
-    (x0, y0, x1, y1) = self.bbox("all")
-    width = (x1-x0)
-    height = (y1-y0)
-    self.configure(width=width, height=height)
-    self.create_text(width/2, height/2,text=text, fill='black', font= self.font)
-    self.bind("<ButtonPress-1>", self._on_press)
-    self.bind("<ButtonRelease-1>", self._on_release)
+        Normally, image objects are created in state tk.NORMAL. Use value
+        tk.DISABLED to make it unresponsive to the mouse, or use tk.HIDDEN to
+        make it invisible.
+        """
+        self.canvas.itemconfigure(self.canvas_btn_img_obj, state=state)
 
-  def _on_press(self, event):
-      self.configure(relief="sunken")
 
-  def _on_release(self, event):
-      self.configure(relief="raised")
-      if self.command is not None:
-          self.command()
+
+# BGR_IMG_PATH = "pictures/photoframe3.png"
+# BUTTON_IMG_PATH = "pictures/write_note.png"
+
+# def btn_clicked():
+#     """ Prints to console a message every time the button is clicked """
+#     print("Button Clicked")
+
+# root = tk.Tk()
+
+# background_img = tk.PhotoImage(file=BGR_IMG_PATH)
+# bgr_width, bgr_height = background_img.width(), background_img.height()
+
+# root.geometry(f'{bgr_width}x{bgr_height}')
+# root.title("TKinter button over transparent background")
+# root.configure(bg="white")
+
+# canvas = tk.Canvas(root, bg="white", height=bgr_height, width=bgr_width, bd=0,
+#                    highlightthickness=0, relief="ridge")
+# canvas.place(x=0, y=0)
+
+# background = canvas.create_image(0, 0, anchor='nw', image=background_img)
+
+# canvas_btn1 = CanvasButton(canvas, 0, 128, BUTTON_IMG_PATH, btn_clicked)
+# canvas_btn2 = CanvasButton(canvas, 0, 256, BUTTON_IMG_PATH, btn_clicked)
+
+# root.resizable(False, False)
+# root.mainloop()

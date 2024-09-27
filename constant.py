@@ -2,6 +2,9 @@
 SCREEN_WIDTH = 378
 SCREEN_HEIGHT = 624
 
+#icon dimensions 
+ICON_DIMENSION = (74, 78)
+
 #popup dimensions
 POPUP_WIDTH = 290
 POPUP_HEIGHT = 390
@@ -14,6 +17,7 @@ WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
 BACKGROUND_IMAGE_PATH = "pictures/photoframe3.png"
 UPCOMING_SCHEDULE_ICON = "pictures/upcoming_schedule.png"
 LIST_ICON = "pictures/list.png"
+DROPDOWN_ICON = "pictures/dropdown.png"
 
 # Colors
 LANDING_BG_COLOR = "#5081FF"

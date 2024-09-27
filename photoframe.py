@@ -1,9 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, Frame
-from tkinter.simpledialog import askstring
+from round_button import CanvasButton
 from PIL import Image, ImageTk
 from datetime import datetime
-from NotePopup import NotePopup  # Import the NotePopup class
+from NotePopup import NotePopup 
+import requests  # To fetch the image from the URL
+from io import BytesIO  # To convert the image data into a usable format
+
 from constant import *
 
 class PhotoFrameApp:
@@ -20,23 +22,39 @@ class PhotoFrameApp:
         # Initialize NotePopup
         self.note_popup = NotePopup(self.root, self)
 
-        # Load and display the full-screen image (replace with backend)
-        image_path = BACKGROUND_IMAGE_PATH
-        image = Image.open(image_path)
-        image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
-        bg_image = ImageTk.PhotoImage(image)
+        # Load and display the full-screen image from URL 
+        image_url = "https://deco3801-foundjesse.uqcloud.net/IMG_6423.jpg"
+        response = requests.get(image_url)
+        # Check if the request was successful
+        if response.status_code == 200:
+            try:
+                image_data = BytesIO(response.content)
+                image = Image.open(image_data)  # Open the image
+                image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)  # Resize
+                bg_image = ImageTk.PhotoImage(image)
 
-        bg_label = tk.Label(self.root, image=bg_image)
-        bg_label.image = bg_image
-        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+                # Set the background canvas and image
+                self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
+                self.canvas.pack(fill="both", expand=True)
+                self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
+                self.canvas.bg_image = bg_image
+            except Exception as e:
+                print(f"Error loading image: {e}")
+                # Handle the error by showing a default image or error message
+                error_label = tk.Label(self.root, text="Failed to load image", bg="white")
+                error_label.place(x=0, y=0, relwidth=1, relheight=1)
+        else:
+            print(f"Failed to fetch image. Status code: {response.status_code}")
+            # Handle the error by showing a default image or error message
+            error_label = tk.Label(self.root, text="Failed to load image", bg="white")
+            error_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-        # Add add-note icon 
-        round_icon = Image.open(WRITE_NOTE_ICON_IMAGE_PATH).resize((30, 30), Image.LANCZOS)
-        icon_image = ImageTk.PhotoImage(round_icon)
-        icon_button = tk.Button(self.root, image=icon_image, command=self.note_popup.show_note, borderwidth=0)
-        icon_button.image = icon_image
-        icon_button.place(x=SCREEN_WIDTH - 60, y=10)
+        # Add add-note icon using CanvasButton
+        icon_button = CanvasButton(self.canvas, SCREEN_WIDTH - 80, 10, WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
 
+
+        calendar_button = CanvasButton(self.canvas, 80, 10, WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
+        
         # Add upcoming schedule icon
         calendar_icon = Image.open(UPCOMING_SCHEDULE_ICON).resize((30, 30), Image.LANCZOS)
         calendar_image = ImageTk.PhotoImage(calendar_icon)
