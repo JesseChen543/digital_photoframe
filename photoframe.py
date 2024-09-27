@@ -22,6 +22,7 @@ class PhotoFrameApp:
         # Initialize NotePopup
         self.note_popup = NotePopup(self.root, self)
 
+        # initialize ListPopup
         # Load and display the full-screen image from URL 
         image_url = "https://deco3801-foundjesse.uqcloud.net/IMG_6423.jpg"
         response = requests.get(image_url)
@@ -38,6 +39,10 @@ class PhotoFrameApp:
                 self.canvas.pack(fill="both", expand=True)
                 self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
                 self.canvas.bg_image = bg_image
+
+                # Hide the default title bar
+                # self.root.overrideredirect(True)
+
             except Exception as e:
                 print(f"Error loading image: {e}")
                 # Handle the error by showing a default image or error message
