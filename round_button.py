@@ -33,32 +33,3 @@ class CanvasButton:
         """
         self.canvas.itemconfigure(self.canvas_btn_img_obj, state=state)
 
-
-
-# BGR_IMG_PATH = "pictures/photoframe3.png"
-# BUTTON_IMG_PATH = "pictures/write_note.png"
-
-# def btn_clicked():
-#     """ Prints to console a message every time the button is clicked """
-#     print("Button Clicked")
-
-# root = tk.Tk()
-
-# background_img = tk.PhotoImage(file=BGR_IMG_PATH)
-# bgr_width, bgr_height = background_img.width(), background_img.height()
-
-# root.geometry(f'{bgr_width}x{bgr_height}')
-# root.title("TKinter button over transparent background")
-# root.configure(bg="white")
-
-# canvas = tk.Canvas(root, bg="white", height=bgr_height, width=bgr_width, bd=0,
-#                    highlightthickness=0, relief="ridge")
-# canvas.place(x=0, y=0)
-
-# background = canvas.create_image(0, 0, anchor='nw', image=background_img)
-
-# canvas_btn1 = CanvasButton(canvas, 0, 128, BUTTON_IMG_PATH, btn_clicked)
-# canvas_btn2 = CanvasButton(canvas, 0, 256, BUTTON_IMG_PATH, btn_clicked)
-
-# root.resizable(False, False)
-# root.mainloop()

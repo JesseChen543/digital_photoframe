@@ -3,7 +3,7 @@ SCREEN_WIDTH = 378
 SCREEN_HEIGHT = 624
 
 #icon dimensions 
-ICON_DIMENSION = (74, 78)
+ICON_DIMENSION = (52, 56)
 
 #popup dimensions
 POPUP_WIDTH = 290
@@ -11,10 +11,18 @@ POPUP_HEIGHT = 390
 PICKDATE_WIDTH = 270
 PICKDATE_HEIGHT = 206
 
+#icon margin
+NOTE_ICON_X = SCREEN_WIDTH - 70
+NOTE_ICON_Y = 17
+CALENDAR_ICON_X = 20
+CALENDAR_ICON_Y = 17
+LIST_ICON_X = 20
+LIST_ICON_Y = 82
+
+
 # File paths
 LOGO_IMAGE_PATH = "pictures/logo1 2.png"
 WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
-BACKGROUND_IMAGE_PATH = "pictures/photoframe3.png"
 UPCOMING_SCHEDULE_ICON = "pictures/upcoming_schedule.png"
 LIST_ICON = "pictures/list.png"
 DROPDOWN_ICON = "pictures/dropdown.png"

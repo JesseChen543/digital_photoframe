@@ -50,24 +50,15 @@ class PhotoFrameApp:
             error_label.place(x=0, y=0, relwidth=1, relheight=1)
 
         # Add add-note icon using CanvasButton
-        icon_button = CanvasButton(self.canvas, SCREEN_WIDTH - 80, 10, WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
+        CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
+                                   WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
 
 
-        calendar_button = CanvasButton(self.canvas, 80, 10, WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
-        
-        # Add upcoming schedule icon
-        calendar_icon = Image.open(UPCOMING_SCHEDULE_ICON).resize((30, 30), Image.LANCZOS)
-        calendar_image = ImageTk.PhotoImage(calendar_icon)
-        calendar_button = tk.Button(self.root, image=calendar_image, borderwidth=0)
-        calendar_button.image = calendar_image
-        calendar_button.place(x=10, y=10)
+        CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
+                                       UPCOMING_SCHEDULE_ICON, self.note_popup.show_note)
 
-        # Add list icon
-        list_icon = Image.open(LIST_ICON).resize((30, 30), Image.LANCZOS)
-        list_image = ImageTk.PhotoImage(list_icon)
-        list_button = tk.Button(self.root, image=list_image, borderwidth=0)
-        list_button.image = list_image
-        list_button.place(x=10, y=60)
+        CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
+                                       LIST_ICON, self.note_popup.show_note)
 
         self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         self.root.bind('<Escape>', self.quit_app)
