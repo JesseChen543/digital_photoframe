@@ -43,6 +43,9 @@ INPUT_COLOR = "#F0F0F0"
 CLOSE_COLOR = "#4E4E4E"
 PICK_DATE_TEXT_COLOR = "#333333"
 PICK_DATE_PREFILLED_COLOR = "#9B9B9B"
+CHOOSE_DATE_PREFILLED_COLOR = "#3F3F3F"
+PREFILLED_BG_COLOR = "#F1F3F7"
+
 
 
 # Font styles
@@ -52,6 +55,7 @@ FONT_QR_TEXT = ("Overpass", 12)
 FONT_LARGE = ("Inter", 16)
 FONT_MEDIUM = ("Inter", 12)
 FONT_SMALL = ("Inter", 9)
+FONT_PREFILLED = ("Open Sans", 9)
 
 # Time options
 TIME_OPTIONS = [f"{h:02d}:00" for h in range(0, 24)]  # Generates times from 00:00 to 23:00

@@ -74,8 +74,32 @@ class NotePopup:
             end_label = tk.Label(end_frame, text="End:", bg=POPUP_BG_COLOR, font=FONT_SMALL)
             end_label.pack(side="left", padx=5)
 
-            self.choose_date_button = tk.Button(end_frame, text="Choose Date", command=self.pick_date)
-            self.choose_date_button.pack(side="right", padx=5)
+            # Create a frame for the button with the same background color as end_frame
+            date_button_frame = tk.Frame(end_frame, bg=PREFILLED_BG_COLOR)  # Use the same background color
+            date_button_frame.pack(side="right", padx=5)
+
+            # Load the image for the button (make sure to replace 'image_path.png' with your actual image path)
+            date_icon_image = Image.open(UPCOMING_SCHEDULE_ICON)  
+            date_icon_image = date_icon_image.resize((20, 20), Image.LANCZOS)  
+            date_icon_photo = ImageTk.PhotoImage(date_icon_image)
+
+            # Create an image label and place it in the frame
+            image_label = tk.Label(date_button_frame, image=date_icon_photo, bg=date_button_frame.cget("bg"))
+            image_label.pack(side="left", padx=(0, 5))  # Add some padding to the right of the image
+
+            # Create the button and place it in the frame
+            self.choose_date_button = tk.Button(
+                date_button_frame,
+                text="Choose Date",
+                command=self.pick_date,
+                font=FONT_PREFILLED,
+                fg=CHOOSE_DATE_PREFILLED_COLOR,
+                borderwidth=0
+            )
+            self.choose_date_button.pack(side="right")  # Button should pack to the right of the image
+
+            # Keep a reference to the image to prevent garbage collection
+            image_label.image = date_icon_photo
 
             # Note
             note_frame = Frame(inner_frame, bg=POPUP_BG_COLOR)
@@ -108,6 +132,9 @@ class NotePopup:
     def pick_date(self):
         self.pick_date_popup = tk.Toplevel(self.root)
         self.pick_date_popup.configure(bg=POPUP_BG_COLOR)
+
+        # Reset the selected day button reference to None
+        self.selected_day_button = None  # Reset to prevent referencing a destroyed button
 
         # Configure the grid for the popup window to align everything to the left
         self.pick_date_popup.grid_columnconfigure(0, weight=1)
@@ -191,11 +218,11 @@ class NotePopup:
         # Retrieve the selected time from the Combobox
         self.selected_time = self.End_time_combobox.get()  # Get time from Combobox
 
-        if self.selected_day and self.selected_time:
+        if self.selected_day is not None and self.selected_time:
             # Get the current date and time
             current_time = datetime.now()
             # Get the current day of the week 
-            current_day = current_time.weekday() + 1
+            current_day = current_time.weekday()
             
             # Create a datetime object for the selected day and time
             selected_datetime = current_time.replace(hour=int(self.selected_time.split(':')[0]), 
@@ -215,8 +242,8 @@ class NotePopup:
             print(f"Selected day: {self.selected_day}, Time: {self.selected_time}")
 
             # Update the Choose Date button text
-            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            day_text = day_names[self.selected_day]
+            day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+            day_text = day_names[self.selected_day - 1]
             self.choose_date_button.config(text=f"{day_text} {self.selected_time}")
             
             # Optionally, store it in the app or a variable
