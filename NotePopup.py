@@ -63,7 +63,7 @@ class NotePopup:
 
             # Entry 
             list_name_entry = tk.Entry(list_name_frame, font=FONT_SMALL, relief="solid", 
-                                       bd=1, width=LIST_NAME_WIDTH, bg=INPUT_COLOR)
+                                       bd=1, width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
             list_name_entry.pack(fill="x", padx=5, pady=5)
             list_name_entry.insert(0, self.app.saved_list_name)
 
@@ -109,7 +109,7 @@ class NotePopup:
             note_label.pack(side="top", anchor="w", padx=5)
 
             note_entry = tk.Text(note_frame, font=FONT_SMALL, relief="solid", bd=1, height=7, 
-                                 width=LIST_NAME_WIDTH, bg=INPUT_COLOR)
+                                 width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
             note_entry.pack(fill="both", padx=5, pady=5, expand=True)
             note_entry.insert("1.0", self.app.saved_note_value)
 
