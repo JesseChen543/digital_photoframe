@@ -29,6 +29,7 @@ WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
 UPCOMING_SCHEDULE_ICON = "pictures/upcoming_schedule.png"
 LIST_ICON = "pictures/list.png"
 DROPDOWN_ICON = "pictures/dropdown.png"
+TIME_ICON = "pictures/time_icon.png"
 
 # Colors
 LANDING_BG_COLOR = "#5081FF"
