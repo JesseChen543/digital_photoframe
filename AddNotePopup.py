@@ -7,13 +7,15 @@ from tkinter import simpledialog
 from tkinter import messagebox
 from datetime import datetime
 
-class NotePopup:
+class AddNotePopup:
     def __init__(self, root, app=None):
         self.root = root
-        self.app = app  # Pass in the main application (PhotoFrameApp)
+        self.app = app  
         self.popup_window = None
         self.pick_date_popup = None
         self.selected_day_button = None
+        self.list_name_entry = None
+        self.note_entry = None
         self.selected_day = None  
         self.selected_time = None
         self.End_time_combobox = None 
@@ -62,10 +64,10 @@ class NotePopup:
             list_name_label.pack(anchor="w", padx=5)
 
             # Entry 
-            list_name_entry = tk.Entry(list_name_frame, font=FONT_SMALL, relief="solid", 
+            self.list_name_entry = tk.Entry(list_name_frame, font=FONT_SMALL, relief="solid", 
                                        bd=1, width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
-            list_name_entry.pack(fill="x", padx=5, pady=5)
-            list_name_entry.insert(0, self.app.saved_list_name)
+            self.list_name_entry.pack(fill="x", padx=5, pady=5)
+            self.list_name_entry.insert(0, self.app.saved_list_name)
 
             # End Date
             end_frame = Frame(inner_frame, bg=POPUP_BG_COLOR)
@@ -96,7 +98,7 @@ class NotePopup:
                 fg=CHOOSE_DATE_PREFILLED_COLOR,
                 borderwidth=0
             )
-            self.choose_date_button.pack(side="right")  # Button should pack to the right of the image
+            self.choose_date_button.pack(side="right")  
 
             # Keep a reference to the image to prevent garbage collection
             image_label.image = date_icon_photo
@@ -108,15 +110,30 @@ class NotePopup:
             note_label = tk.Label(note_frame, text="Note:", bg=POPUP_BG_COLOR, font=FONT_SMALL)
             note_label.pack(side="top", anchor="w", padx=5)
 
-            note_entry = tk.Text(note_frame, font=FONT_SMALL, relief="solid", bd=1, height=7, 
+            self.note_entry = tk.Text(note_frame, font=FONT_SMALL, relief="solid", bd=1, height=7, 
                                  width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
-            note_entry.pack(fill="both", padx=5, pady=5, expand=True)
-            note_entry.insert("1.0", self.app.saved_note_value)
+            self.note_entry.pack(fill="both", padx=5, pady=5, expand=True)
+            self.note_entry.insert("1.0", self.app.saved_note_value)
 
             # Submit button at the bottom
             submit_button = tk.Button(self.popup_window, text="Upload", bg=BUTTON_COLOR, 
-                                      fg=BUTTON_TEXT_COLOR, font=FONT_MEDIUM, relief="flat")
+                                      fg=BUTTON_TEXT_COLOR, font=FONT_MEDIUM, relief="flat", command=self.submit_note)
             submit_button.pack(anchor="e", padx=10, pady=10)
+
+    def submit_note(self):
+        name = self.list_name_entry.get().strip()
+        if name:
+            end_date = self.choose_date_button.cget("text")
+            note = self.note_entry.get("1.0", tk.END).strip()
+            
+            # Update the values in the app
+            self.app.update_saved_values(name, end_date, note)
+            
+            print(f"Submitted note - Name: {name}, End Date: {end_date}, Note: {note}")
+            messagebox.showinfo("Success", "Note uploaded successfully!")
+            self.close_popup()
+        else:
+            messagebox.showerror("Error", "Please enter a name for the note.")
 
     def center_popup(self):
         # Calculate the position to center the window
@@ -178,18 +195,18 @@ class NotePopup:
         time_frame = tk.Frame(self.pick_date_popup, bg=POPUP_BG_COLOR)
         time_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
 
-        # Custom frame to hold the Combobox and icon together
-        combobox_with_icon_frame = tk.Frame(time_frame, bg=POPUP_BG_COLOR)
-        combobox_with_icon_frame.grid(row=0, column=2, padx=0, pady=5)
-
-        # Time icon (loaded from file)
-        time_icon_image = Image.open("pictures/time_logo.png")
-        time_icon_image = time_icon_image.resize((20, 20), Image.LANCZOS)
-        time_icon_photo = ImageTk.PhotoImage(time_icon_image)
-
         # Label for the 'End' next to the combobox
         tk.Label(time_frame, text="End", bg=POPUP_BG_COLOR, fg=PICK_DATE_TEXT_COLOR, 
                  font=FONT_MEDIUM).grid(row=0, column=0, padx=(5, 0), sticky='w')
+        
+        # Custom frame to hold the Combobox and icon together
+        combobox_with_icon_frame = tk.Frame(time_frame, bg=POPUP_BG_COLOR)
+        combobox_with_icon_frame.grid(row=0, column=2, padx=0, pady=5)
+        
+        # Time icon (loaded from file)
+        time_icon_image = Image.open(TIME_ICON)
+        time_icon_image = time_icon_image.resize((20, 20), Image.LANCZOS)
+        time_icon_photo = ImageTk.PhotoImage(time_icon_image)
         
         # Create a button for the time icon and place it next to the combobox
         time_icon_button = tk.Button(combobox_with_icon_frame, image=time_icon_photo, bg=POPUP_BG_COLOR, relief="flat", bd=0)
@@ -252,4 +269,3 @@ class NotePopup:
             self.close_pick_date_popup()  # Close the pick date popup
         else:
             messagebox.showwarning("Selection Error", "Please select both a day and a time.")
-

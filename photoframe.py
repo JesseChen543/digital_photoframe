@@ -2,7 +2,8 @@ import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk
 from datetime import datetime
-from NotePopup import NotePopup 
+from AddNotePopup import AddNotePopup 
+from ViewNotePopup import ViewNotePopup
 import requests  # To fetch the image from the URL
 from io import BytesIO  # To convert the image data into a usable format
 
@@ -20,7 +21,10 @@ class PhotoFrameApp:
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
         # Initialize NotePopup
-        self.note_popup = NotePopup(self.root, self)
+        self.add_note_popup = AddNotePopup(self.root, self)
+
+        self.view_note_popup = ViewNotePopup(self.root, self)
+        
 
         # initialize ListPopup
         # Load and display the full-screen image from URL 
@@ -56,17 +60,23 @@ class PhotoFrameApp:
 
         # Add add-note icon using CanvasButton
         CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                                   WRITE_NOTE_ICON_IMAGE_PATH, self.note_popup.show_note)
+                                   WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.show_note)
 
 
         CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                                       UPCOMING_SCHEDULE_ICON, self.note_popup.show_note)
+                                       UPCOMING_SCHEDULE_ICON, self.add_note_popup.show_note)
 
         CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                                       LIST_ICON, self.note_popup.show_note)
+                                       LIST_ICON, self.view_note_popup.show_list)
 
         self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         self.root.bind('<Escape>', self.quit_app)
+
+    def update_saved_values(self, list_name, end_value, note_value):
+        self.saved_list_name = list_name
+        self.saved_end_value = end_value
+        self.saved_note_value = note_value
+        print(f"Updated values in PhotoFrameApp - Name: {list_name}, End: {end_value}, Note: {note_value}")
 
     def quit_app(self, event=None):
         self.root.quit()
