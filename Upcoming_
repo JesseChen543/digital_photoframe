@@ -9,11 +9,7 @@ class ViewNotePopup:
     def __init__(self, root, app):
         self.root = root
         self.app = app
-        self.popup_window = None
-        self.time_icon_photo = None  
-        self.dropdown_photo = None   
-        self.details_label = None     
-        self.note_frame = None       
+        self.popup_window = None  
 
     def show_list(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
@@ -31,7 +27,7 @@ class ViewNotePopup:
             self.main_frame.pack(fill="both", expand=True)
 
             # Utilize PopupHeader to create the header
-            PopupHeader(parent=self.main_frame, title_text="Write a Note", on_close=self.close_popup)
+            PopupHeader(parent=self.main_frame, title_text="Upcoming Schedule", on_close=self.close_popup)
 
             # Create a note item using the saved values
             self.create_note_item(self.app.saved_list_name, self.app.saved_end_value)

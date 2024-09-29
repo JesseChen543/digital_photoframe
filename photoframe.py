@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from datetime import datetime
 from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
+from utils import center_window_parent
 import requests  # To fetch the image from the URL
 from io import BytesIO  # To convert the image data into a usable format
 
@@ -68,8 +69,7 @@ class PhotoFrameApp:
 
         CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
                                        LIST_ICON, self.view_note_popup.show_list)
-
-        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.root.bind('<Escape>', self.quit_app)
 
     def update_saved_values(self, list_name, end_value, note_value):

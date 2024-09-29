@@ -3,9 +3,10 @@ import tkinter as tk
 from tkinter import ttk, Frame
 from PIL import Image, ImageTk
 from constant import *
-from tkinter import simpledialog
 from tkinter import messagebox
 from datetime import datetime
+from PopupHeader import PopupHeader
+from utils import center_window_parent
 
 class AddNotePopup:
     def __init__(self, root, app=None):
@@ -13,14 +14,13 @@ class AddNotePopup:
         self.app = app  
         self.popup_window = None
         self.pick_date_popup = None
-        self.selected_day_button = None
+        self.selected_day_button = None 
         self.list_name_entry = None
         self.note_entry = None
         self.selected_day = None  
         self.selected_time = None
         self.End_time_combobox = None 
         self.choose_date_button = None
-        
 
     def show_note(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
@@ -31,25 +31,14 @@ class AddNotePopup:
             # Hide the default title bar
             self.popup_window.overrideredirect(True)
 
-            # Center the popup window
-            self.center_popup()
+            # Center the popup window relative to the root window
+            center_window_parent(self.popup_window, POPUP_WIDTH, POPUP_HEIGHT)
 
             main_frame = Frame(self.popup_window, bg=POPUP_BG_COLOR)
             main_frame.pack(fill="both", expand=True)
 
-            # Title frame
-            title_close_frame = Frame(main_frame, bg=POPUP_BG_COLOR)
-            title_close_frame.pack(fill="x")
-
-            title_label = tk.Label(title_close_frame, text="Write a Note", font=FONT_LARGE, bg=POPUP_BG_COLOR)
-            title_label.pack(side="left", padx=10, fill="x")
-
-            # Close Button
-            close_button = tk.Button(title_close_frame, text="X", command=self.close_popup, bg="white", fg=CLOSE_COLOR, font=(FONT_SMALL, 12), relief="flat")
-            close_button.pack(side="right", padx=10)
-
-            separator = ttk.Separator(main_frame, orient='horizontal')
-            separator.pack(fill='x', pady=5)
+            # Utilize PopupHeader to create the header
+            PopupHeader(parent=main_frame, title_text="Write a Note", on_close=self.close_popup)
 
             # Inner frame for form fields
             inner_frame = Frame(main_frame, bg=POPUP_BG_COLOR)
@@ -64,8 +53,15 @@ class AddNotePopup:
             list_name_label.pack(anchor="w", padx=5)
 
             # Entry 
-            self.list_name_entry = tk.Entry(list_name_frame, font=FONT_SMALL, relief="solid", 
-                                       bd=1, width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
+            self.list_name_entry = tk.Entry(
+                list_name_frame, 
+                font=FONT_SMALL, 
+                relief="solid", 
+                bd=1, 
+                width=LIST_NAME_WIDTH, 
+                bg=INPUT_COLOR, 
+                borderwidth=0
+            )
             self.list_name_entry.pack(fill="x", padx=5, pady=5)
             self.list_name_entry.insert(0, self.app.saved_list_name)
 
@@ -77,17 +73,17 @@ class AddNotePopup:
             end_label.pack(side="left", padx=5)
 
             # Create a frame for the button with the same background color as end_frame
-            date_button_frame = tk.Frame(end_frame, bg=PREFILLED_BG_COLOR)  # Use the same background color
+            date_button_frame = tk.Frame(end_frame, bg=PREFILLED_BG_COLOR)  
             date_button_frame.pack(side="right", padx=5)
 
-            # Load the image for the button (make sure to replace 'image_path.png' with your actual image path)
+            # Load the image for the button 
             date_icon_image = Image.open(UPCOMING_SCHEDULE_ICON)  
             date_icon_image = date_icon_image.resize((20, 20), Image.LANCZOS)  
             date_icon_photo = ImageTk.PhotoImage(date_icon_image)
 
             # Create an image label and place it in the frame
             image_label = tk.Label(date_button_frame, image=date_icon_photo, bg=date_button_frame.cget("bg"))
-            image_label.pack(side="left", padx=(0, 5))  # Add some padding to the right of the image
+            image_label.pack(side="left", padx=(0, 5))  
 
             # Create the button and place it in the frame
             self.choose_date_button = tk.Button(
@@ -110,14 +106,29 @@ class AddNotePopup:
             note_label = tk.Label(note_frame, text="Note:", bg=POPUP_BG_COLOR, font=FONT_SMALL)
             note_label.pack(side="top", anchor="w", padx=5)
 
-            self.note_entry = tk.Text(note_frame, font=FONT_SMALL, relief="solid", bd=1, height=7, 
-                                 width=LIST_NAME_WIDTH, bg=INPUT_COLOR, borderwidth=0)
+            self.note_entry = tk.Text(
+                note_frame, 
+                font=FONT_SMALL, 
+                relief="solid", 
+                bd=1, 
+                height=7, 
+                width=LIST_NAME_WIDTH, 
+                bg=INPUT_COLOR, 
+                borderwidth=0
+            )
             self.note_entry.pack(fill="both", padx=5, pady=5, expand=True)
             self.note_entry.insert("1.0", self.app.saved_note_value)
 
             # Submit button at the bottom
-            submit_button = tk.Button(self.popup_window, text="Upload", bg=BUTTON_COLOR, 
-                                      fg=BUTTON_TEXT_COLOR, font=FONT_MEDIUM, relief="flat", command=self.submit_note)
+            submit_button = tk.Button(
+                self.popup_window, 
+                text="Upload", 
+                bg=BUTTON_COLOR, 
+                fg=BUTTON_TEXT_COLOR, 
+                font=FONT_MEDIUM, 
+                relief="flat", 
+                command=self.submit_note
+            )
             submit_button.pack(anchor="e", padx=10, pady=10)
 
     def submit_note(self):
@@ -135,16 +146,11 @@ class AddNotePopup:
         else:
             messagebox.showerror("Error", "Please enter a name for the note.")
 
-    def center_popup(self):
-        # Calculate the position to center the window
-        x = (self.root.winfo_width() // 2) - (POPUP_WIDTH // 2) + self.root.winfo_x()
-        y = (self.root.winfo_height() // 2) - (POPUP_HEIGHT // 2) + self.root.winfo_y()
-        self.popup_window.geometry(f"{POPUP_WIDTH}x{POPUP_HEIGHT}+{x}+{y}")
-
     # Method to close the popup
     def close_popup(self):
         if self.popup_window:
             self.popup_window.destroy()
+            self.popup_window = None
 
     def pick_date(self):
         self.pick_date_popup = tk.Toplevel(self.root)
@@ -157,7 +163,13 @@ class AddNotePopup:
         self.pick_date_popup.grid_columnconfigure(0, weight=1)
 
         # Title Label 
-        title_label = tk.Label(self.pick_date_popup, text="Week", font=FONT_LARGE, bg=POPUP_BG_COLOR, fg=PICK_DATE_TEXT_COLOR)
+        title_label = tk.Label(
+            self.pick_date_popup, 
+            text="Week", 
+            font=FONT_LARGE, 
+            bg=POPUP_BG_COLOR, 
+            fg=PICK_DATE_TEXT_COLOR
+        )
         title_label.grid(row=0, column=0, sticky='w', padx=10, pady=5)  # Align to left
 
         # Days of the week
@@ -166,7 +178,13 @@ class AddNotePopup:
         days_of_week = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
         
         for i, day in enumerate(days_of_week):
-            tk.Label(days_frame, text=day, bg="white", fg=PICK_DATE_TEXT_COLOR, font=FONT_MEDIUM).grid(row=0, column=i, padx=5, pady=5, sticky='w')
+            tk.Label(
+                days_frame, 
+                text=day, 
+                bg="white", 
+                fg=PICK_DATE_TEXT_COLOR, 
+                font=FONT_MEDIUM
+            ).grid(row=0, column=i, padx=5, pady=5, sticky='w')
 
         def select_day(button, day):
             if self.selected_day_button:
@@ -196,20 +214,31 @@ class AddNotePopup:
         time_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
 
         # Label for the 'End' next to the combobox
-        tk.Label(time_frame, text="End", bg=POPUP_BG_COLOR, fg=PICK_DATE_TEXT_COLOR, 
-                 font=FONT_MEDIUM).grid(row=0, column=0, padx=(5, 0), sticky='w')
+        tk.Label(
+            time_frame, 
+            text="End", 
+            bg=POPUP_BG_COLOR, 
+            fg=PICK_DATE_TEXT_COLOR, 
+            font=FONT_MEDIUM
+        ).grid(row=0, column=0, padx=(5, 0), sticky='w')
         
         # Custom frame to hold the Combobox and icon together
         combobox_with_icon_frame = tk.Frame(time_frame, bg=POPUP_BG_COLOR)
         combobox_with_icon_frame.grid(row=0, column=2, padx=0, pady=5)
-        
+
         # Time icon (loaded from file)
         time_icon_image = Image.open(TIME_ICON)
         time_icon_image = time_icon_image.resize((20, 20), Image.LANCZOS)
         time_icon_photo = ImageTk.PhotoImage(time_icon_image)
         
         # Create a button for the time icon and place it next to the combobox
-        time_icon_button = tk.Button(combobox_with_icon_frame, image=time_icon_photo, bg=POPUP_BG_COLOR, relief="flat", bd=0)
+        time_icon_button = tk.Button(
+            combobox_with_icon_frame, 
+            image=time_icon_photo, 
+            bg=POPUP_BG_COLOR, 
+            relief="flat", 
+            bd=0
+        )
         time_icon_button.grid(row=0, column=1, padx=(0, 5))
 
         # Define a custom style for the Combobox
@@ -217,19 +246,30 @@ class AddNotePopup:
         style.configure("TCombobox", foreground=PICK_DATE_PREFILLED_COLOR, background="white")  
 
         # Create the Combobox with the custom style
-        self.End_time_combobox = ttk.Combobox(combobox_with_icon_frame, values=TIME_OPTIONS, font=FONT_MEDIUM, width=8, style="TCombobox")
+        self.End_time_combobox = ttk.Combobox(
+            combobox_with_icon_frame, 
+            values=TIME_OPTIONS, 
+            font=FONT_MEDIUM, 
+            width=8, 
+            style="TCombobox"
+        )
         self.End_time_combobox.grid(row=0, column=0, padx=(10, 5))
         self.End_time_combobox.set("12:00")
 
-        # Confirm Button (use grid)
-        confirm_button = tk.Button(self.pick_date_popup, text="Confirm", bg=BUTTON_COLOR, fg="white", 
-                                   font=FONT_MEDIUM, relief="flat", command=self.confirm_selection)
-        confirm_button.grid(row=3, column=0, pady=10, padx=10, sticky='e')  
+        # Keep a reference to the image to prevent garbage collection
+        time_icon_button.image = time_icon_photo
 
-    def close_pick_date_popup(self):
-        if self.pick_date_popup:
-            self.pick_date_popup.destroy() 
-            self.pick_date_popup = None
+        # Confirm Button (use grid)
+        confirm_button = tk.Button(
+            self.pick_date_popup, 
+            text="Confirm", 
+            bg=BUTTON_COLOR, 
+            fg="white", 
+            font=FONT_MEDIUM, 
+            relief="flat", 
+            command=self.confirm_selection
+        )
+        confirm_button.grid(row=3, column=0, pady=10, padx=10, sticky='e')  
 
     def confirm_selection(self):
         # Retrieve the selected time from the Combobox
@@ -269,3 +309,8 @@ class AddNotePopup:
             self.close_pick_date_popup()  # Close the pick date popup
         else:
             messagebox.showwarning("Selection Error", "Please select both a day and a time.")
+
+    def close_pick_date_popup(self):
+        if self.pick_date_popup:
+            self.pick_date_popup.destroy()
+            self.pick_date_popup = None
