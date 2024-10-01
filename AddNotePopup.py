@@ -22,7 +22,7 @@ class AddNotePopup:
         self.End_time_combobox = None 
         self.choose_date_button = None
 
-    def show_note(self):
+    def add_note(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = tk.Toplevel(self.root)
             self.popup_window.configure(bg=POPUP_BG_COLOR)
@@ -63,7 +63,6 @@ class AddNotePopup:
                 borderwidth=0
             )
             self.list_name_entry.pack(fill="x", padx=5, pady=5)
-            self.list_name_entry.insert(0, self.app.saved_list_name)
 
             # End Date
             end_frame = Frame(inner_frame, bg=POPUP_BG_COLOR)
@@ -117,7 +116,6 @@ class AddNotePopup:
                 borderwidth=0
             )
             self.note_entry.pack(fill="both", padx=5, pady=5, expand=True)
-            self.note_entry.insert("1.0", self.app.saved_note_value)
 
             # Submit button at the bottom
             submit_button = tk.Button(
@@ -137,11 +135,19 @@ class AddNotePopup:
             end_date = self.choose_date_button.cget("text")
             note = self.note_entry.get("1.0", tk.END).strip()
             
-            # Update the values in the app
-            self.app.update_saved_values(name, end_date, note)
+            # Append the note to the app's saved_notes list
+            self.app.saved_notes.append({
+                "name": name,
+                "end_date": end_date,
+                "note": note
+            })
             
             print(f"Submitted note - Name: {name}, End Date: {end_date}, Note: {note}")
             messagebox.showinfo("Success", "Note uploaded successfully!")
+            
+            # Update the list button after submitting the note
+            self.app.update_list_button()
+            
             self.close_popup()
         else:
             messagebox.showerror("Error", "Please enter a name for the note.")

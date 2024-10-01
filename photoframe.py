@@ -16,9 +16,8 @@ class PhotoFrameApp:
         self.root.title("Image Display with Clickable Icon")
 
         # Initialize saved inputs
-        self.saved_list_name = ""
-        self.saved_end_value = ""
-        self.saved_note_value = ""
+        self.saved_notes = []
+        self.list_button = None  # Initialize list_button as None
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
         # Initialize NotePopup
@@ -61,22 +60,32 @@ class PhotoFrameApp:
 
         # Add add-note icon using CanvasButton
         CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                                   WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.show_note)
-
+                                   WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
 
         CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                                       UPCOMING_SCHEDULE_ICON, self.add_note_popup.show_note)
+                                       UPCOMING_SCHEDULE_ICON, self.add_note_popup.add_note)
 
-        CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                                       LIST_ICON, self.view_note_popup.show_list)
+        # Create the list icon button if self.saved_notes is not None
+        if self.saved_notes:
+            CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
+                                       LIST_ICON, self.view_note_popup.show_notes)
+
         center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.root.bind('<Escape>', self.quit_app)
 
-    def update_saved_values(self, list_name, end_value, note_value):
-        self.saved_list_name = list_name
-        self.saved_end_value = end_value
-        self.saved_note_value = note_value
-        print(f"Updated values in PhotoFrameApp - Name: {list_name}, End: {end_value}, Note: {note_value}")
+
+    def update_list_button(self):
+        """Creates the list button if it doesn't exist and there are saved notes."""
+        if self.saved_notes and not self.list_button:
+            print("Creating the list button")
+            self.list_button = CanvasButton(
+                self.canvas,
+                LIST_ICON_X,
+                LIST_ICON_Y,
+                LIST_ICON,
+                self.view_note_popup.show_notes
+            )
+
 
     def quit_app(self, event=None):
         self.root.quit()

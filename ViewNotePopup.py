@@ -5,17 +5,108 @@ from constant import *
 from PopupHeader import PopupHeader  
 from utils import center_window_parent
 
+class NoteItem:
+    def __init__(self, parent, title, end_time, note_value):
+        self.parent = parent
+        self.title = title
+        self.end_time = end_time
+        self.note_value = note_value
+        self.details_visible = False
+        self.time_icon_photo = None
+        self.dropdown_photo = None
+        self.details_label = None
+
+        self.create_note()
+
+    def create_note(self):
+        # Create the main frame for the note
+        self.note_frame = Frame(self.parent, bg=INPUT_COLOR, bd=1, relief="solid")
+        self.note_frame.pack(fill="x", padx=20, pady=10)
+        
+        # Note Title
+        note_title_label = Label(self.note_frame, text=self.title, font=FONT_MEDIUM, bg=INPUT_COLOR)
+        note_title_label.pack(anchor="w", padx=10, pady=(5, 0))
+
+        # Frame for time and dropdown icon
+        info_frame = Frame(self.note_frame, bg=INPUT_COLOR)
+        info_frame.pack(anchor="w", padx=10, pady=(2, 0), fill="x")
+
+        # End Time Icon
+        try:
+            time_icon_image = Image.open(TIME_ICON)
+            time_icon_image = time_icon_image.resize((10, 10), Image.LANCZOS)
+            self.time_icon_photo = ImageTk.PhotoImage(time_icon_image)
+        except Exception as e:
+            print(f"Error loading TIME_ICON: {e}")
+            self.time_icon_photo = None
+
+        time_icon_label = Label(info_frame, image=self.time_icon_photo, bg=INPUT_COLOR)
+        time_icon_label.pack(side="left")
+        time_icon_label.image = self.time_icon_photo  # Keep a reference
+
+        # End Time Label
+        end_time_label = Label(
+            info_frame,
+            text=self.end_time,
+            font=FONT_SMALL,
+            fg=CLOSE_COLOR,
+            bg=INPUT_COLOR
+        )
+        end_time_label.pack(side="left", padx=(5, 0))  
+
+        # Conditionally create the dropdown arrow if note_value exists
+        if self.note_value:
+            # Load and resize the dropdown icon
+            try:
+                dropdown_icon_image = Image.open(DROPDOWN_ICON)
+                dropdown_icon_image = dropdown_icon_image.resize((10, 10), Image.LANCZOS)
+                self.dropdown_photo = ImageTk.PhotoImage(dropdown_icon_image)
+            except Exception as e:
+                print(f"Error loading DROPDOWN_ICON: {e}")
+                self.dropdown_photo = None
+
+
+            arrow_icon = Label(info_frame, image=self.dropdown_photo, bg=INPUT_COLOR)
+            arrow_icon.image = self.dropdown_photo  # Keep a reference
+            arrow_icon.pack(side="right")
+    
+
+            # Bind click event to toggle note details
+            toggle = self.toggle_note_details
+            self.note_frame.bind("<Button-1>", toggle)
+            note_title_label.bind("<Button-1>", toggle)
+            time_icon_label.bind("<Button-1>", toggle)
+            end_time_label.bind("<Button-1>", toggle)
+            arrow_icon.bind("<Button-1>", toggle)
+
+    def toggle_note_details(self, event=None):
+        """Toggle the visibility of note details dynamically based on content length."""
+        if self.details_visible:
+            # Hide details
+            if self.details_label and self.details_label.winfo_exists():
+                self.details_label.destroy()
+            self.details_visible = False
+        else:
+            # Show details
+            self.details_label = Label(
+                self.note_frame,
+                text=self.note_value, 
+                font=FONT_SMALL, 
+                bg=INPUT_COLOR, 
+                wraplength=FRAME_WIDTH - 40,  # Adjust wraplength as needed
+                justify="left"
+            )
+            self.details_label.pack(side="left")
+
+            self.details_visible = True
+
 class ViewNotePopup:
     def __init__(self, root, app):
         self.root = root
         self.app = app
         self.popup_window = None
-        self.time_icon_photo = None  
-        self.dropdown_photo = None   
-        self.details_label = None     
-        self.note_frame = None       
 
-    def show_list(self):
+    def show_notes(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = tk.Toplevel(self.root)
             self.popup_window.configure(bg=POPUP_BG_COLOR)
@@ -31,103 +122,32 @@ class ViewNotePopup:
             self.main_frame.pack(fill="both", expand=True)
 
             # Utilize PopupHeader to create the header
-            PopupHeader(parent=self.main_frame, title_text="Write a Note", on_close=self.close_popup)
+            PopupHeader(parent=self.main_frame, title_text="View Notes", on_close=self.close_popup)
 
-            # Create a note item using the saved values
-            self.create_note_item(self.app.saved_list_name, self.app.saved_end_value)
+            # Check if there are any saved notes before creating note items
+            if not hasattr(self.app, 'saved_notes') or not self.app.saved_notes:
+                no_notes_label = Label(
+                    self.main_frame,
+                    text="No notes available.",
+                    font=FONT_MEDIUM,
+                    bg=POPUP_BG_COLOR
+                )
+                no_notes_label.pack(pady=20)
+                return
+
+            # Iterate through saved_notes and create NoteItem instances for each
+            for note in self.app.saved_notes:
+                NoteItem(
+                    parent=self.main_frame, 
+                    title=note.get('name', 'Untitled'), 
+                    end_time=note.get('end_date', 'No Date'), 
+                    note_value=note.get('note', '')
+                )
 
     def close_popup(self):
         if self.popup_window:
             self.popup_window.destroy()
             self.popup_window = None
-
-    def create_note_item(self, title, end_time):
-        """Function to create a note item with a title, end time, and dropdown arrow using place."""
-        self.note_frame = Frame(self.main_frame, bg=INPUT_COLOR, bd=1, relief="solid")
-        self.note_frame.pack(fill="x", padx=20, pady=10)
-        self.note_frame.update_idletasks()  # Ensure frame dimensions are updated
-
-        self.note_frame.config(width=FRAME_WIDTH, height=FRAME_HEIGHT_COLLAPSED)
-
-        # Note Title
-        note_title_label = Label(self.note_frame, text=title, font=FONT_MEDIUM, bg=INPUT_COLOR)
-        note_title_label.place(x=10, y=5)
-
-        # End Time Icon
-        try:
-            time_icon_image = Image.open(TIME_ICON)
-            time_icon_image = time_icon_image.resize((10, 10), Image.LANCZOS)
-            self.time_icon_photo = ImageTk.PhotoImage(time_icon_image)
-        except Exception as e:
-            print(f"Error loading TIME_ICON: {e}")
-            self.time_icon_photo = None
-
-        if self.time_icon_photo:
-            time_icon_label = Label(self.note_frame, image=self.time_icon_photo, bg=INPUT_COLOR)
-            time_icon_label.place(x=10, y=28)  # Adjusted y from 30 to 25
-        else:
-            # If the icon fails to load, use a smaller placeholder
-            time_icon_label = Label(self.note_frame, text="⌚", font=FONT_SMALL, bg=INPUT_COLOR)
-            time_icon_label.place(x=10, y=25)  # Adjusted y from 30 to 25
-
-        # End Time Label
-        end_time_label = Label(
-            self.note_frame,
-            text=end_time,
-            font=FONT_SMALL,
-            fg=CLOSE_COLOR,
-            bg=INPUT_COLOR
-        )
-        # Position end_time_label right next to the icon with adjusted y
-        end_time_label.place(x=25, y=25)  
-
-        # Load and resize the dropdown icon
-        try:
-            dropdown_icon_image = Image.open(DROPDOWN_ICON)
-            dropdown_icon_image = dropdown_icon_image.resize((10, 10), Image.LANCZOS)
-            self.dropdown_photo = ImageTk.PhotoImage(dropdown_icon_image)
-        except Exception as e:
-            print(f"Error loading DROPDOWN_ICON: {e}")
-            self.dropdown_photo = None
-
-        # Create a label with the dropdown icon
-        if self.dropdown_photo:
-            arrow_icon = Label(self.note_frame, image=self.dropdown_photo, bg=INPUT_COLOR)
-            arrow_icon.image = self.dropdown_photo  # Keep a reference to prevent garbage collection
-            arrow_icon.place(x=FRAME_WIDTH - 20, y=20)
-        else:
-            arrow_icon = Label(self.note_frame, text="▼", font=FONT_SMALL, bg=INPUT_COLOR)
-            arrow_icon.place(x=FRAME_WIDTH - 20, y=20)
-
-        # Bind click event to toggle note details
-        # Use a consistent method reference to avoid creating multiple instances
-        toggle = lambda event: self.toggle_note_details()
-        self.note_frame.bind("<Button-1>", toggle)
-        note_title_label.bind("<Button-1>", toggle)
-        time_icon_label.bind("<Button-1>", toggle)
-        end_time_label.bind("<Button-1>", toggle)
-        arrow_icon.bind("<Button-1>", toggle)
-
-    def toggle_note_details(self):
-        """Toggle the visibility of note details."""
-        if self.details_label and self.details_label.winfo_exists():
-            # Details are visible; destroy them and collapse the frame
-            self.details_label.destroy()
-            self.details_label = None
-            self.note_frame.config(height=50)  # Collapse back to original height
-        else:
-            # Details are not visible; create them and expand the frame
-            self.details_label = Label(
-                self.note_frame,
-                text=self.app.saved_note_value, 
-                font=FONT_SMALL, 
-                bg=INPUT_COLOR, 
-                wraplength=FRAME_WIDTH - 20, 
-                justify="left"
-            )
-            self.details_label.place(x=10, y=45)  
-
-            self.note_frame.config(height=100)  
 
     def quit_app(self):
         self.root.quit()
@@ -137,10 +157,29 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()  # Hide the main root window if you only want the popup to show
     app = type('', (), {
-        'saved_list_name': 'Sample Note', 
-        'saved_end_value': 'Friday 13:00', 
-        'saved_note_value': 'This is a sample note description that appears when the dropdown is clicked.'
+        'saved_notes': [
+            {
+                'name': 'Sample Note 1',
+                'end_date': 'Friday 13:00',
+                'note': 'This is the first sample note description. It is concise.'
+            },
+            {
+                'name': 'Sample Note 2',
+                'end_date': 'Saturday 14:00',
+                'note': 'This is the second sample note description. It is a bit longer to demonstrate dynamic expansion based on content length. The frame should adjust its size to accommodate all the text without overlapping other notes.'
+            },
+            {
+                'name': 'Sample Note 3',
+                'end_date': 'Sunday 15:00',
+                'note': 'Short note.'
+            },
+            {
+                'name': 'Sample Note 4',
+                'end_date': 'Monday 16:00',
+                'note': ''  # This note has no content and should not show toggle
+            }
+        ]
     })()
     note_page = ViewNotePopup(root, app)
-    note_page.show_list()
+    note_page.show_notes()
     root.mainloop()
