@@ -14,6 +14,8 @@ class NoteItem:
         self.details_visible = False
         self.time_icon_photo = None
         self.dropdown_photo = None
+        self.dropdown_photo_inversed = None
+        self.arrow_icon = None
         self.details_label = None
 
         self.create_note()
@@ -56,19 +58,23 @@ class NoteItem:
 
         # Conditionally create the dropdown arrow if note_value exists
         if self.note_value:
-            # Load and resize the dropdown icon
+            # Load and resize the dropdown icons
             try:
                 dropdown_icon_image = Image.open(DROPDOWN_ICON)
                 dropdown_icon_image = dropdown_icon_image.resize((10, 10), Image.LANCZOS)
                 self.dropdown_photo = ImageTk.PhotoImage(dropdown_icon_image)
+
+                dropdown_icon_inversed_image = Image.open(DROPDOWN_ICON_INVERSED)
+                dropdown_icon_inversed_image = dropdown_icon_inversed_image.resize((10, 10), Image.LANCZOS)
+                self.dropdown_photo_inversed = ImageTk.PhotoImage(dropdown_icon_inversed_image)
             except Exception as e:
-                print(f"Error loading DROPDOWN_ICON: {e}")
+                print(f"Error loading dropdown icons: {e}")
                 self.dropdown_photo = None
+                self.dropdown_photo_inversed = None
 
-
-            arrow_icon = Label(info_frame, image=self.dropdown_photo, bg=INPUT_COLOR)
-            arrow_icon.image = self.dropdown_photo  # Keep a reference
-            arrow_icon.pack(side="right")
+            self.arrow_icon = Label(info_frame, image=self.dropdown_photo, bg=INPUT_COLOR)
+            self.arrow_icon.image = self.dropdown_photo  # Keep a reference
+            self.arrow_icon.pack(side="right")
     
 
             # Bind click event to toggle note details
@@ -77,7 +83,7 @@ class NoteItem:
             note_title_label.bind("<Button-1>", toggle)
             time_icon_label.bind("<Button-1>", toggle)
             end_time_label.bind("<Button-1>", toggle)
-            arrow_icon.bind("<Button-1>", toggle)
+            self.arrow_icon.bind("<Button-1>", toggle)
 
     def toggle_note_details(self, event=None):
         """Toggle the visibility of note details dynamically based on content length."""
@@ -86,6 +92,8 @@ class NoteItem:
             if self.details_label and self.details_label.winfo_exists():
                 self.details_label.destroy()
             self.details_visible = False
+            self.arrow_icon.configure(image=self.dropdown_photo)
+            self.arrow_icon.image = self.dropdown_photo
         else:
             # Show details
             self.details_label = Label(
@@ -99,6 +107,8 @@ class NoteItem:
             self.details_label.pack(side="left")
 
             self.details_visible = True
+            self.arrow_icon.configure(image=self.dropdown_photo_inversed)
+            self.arrow_icon.image = self.dropdown_photo_inversed
 
 class ViewNotePopup:
     def __init__(self, root, app):

@@ -33,6 +33,7 @@ WRITE_NOTE_ICON_IMAGE_PATH = "pictures/write_note.png"
 UPCOMING_SCHEDULE_ICON = "pictures/upcoming_schedule.png"
 LIST_ICON = "pictures/list.png"
 DROPDOWN_ICON = "pictures/dropdown.png"
+DROPDOWN_ICON_INVERSED = "pictures/dropdownicon_inversed.png"
 TIME_ICON = "pictures/time_icon.png"
 
 # Colors
