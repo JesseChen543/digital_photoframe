@@ -244,32 +244,68 @@ class AddNotePopup:
             font=FONT_SMALL
         ).pack(side='left', padx=(0, 5))
 
+        # Create a frame for the combobox with icon and border
+        combobox_frame = tk.Frame(time_frame, bg="white", bd=1, relief="solid")
+        combobox_frame.pack(side='left')
+
         # Time icon
         time_icon_image = Image.open(TIME_ICON)
         time_icon_image = time_icon_image.resize((16, 16), Image.LANCZOS)
         time_icon_photo = ImageTk.PhotoImage(time_icon_image)
         
         time_icon_label = tk.Label(
-            time_frame, 
+            combobox_frame, 
             image=time_icon_photo, 
-            bg=POPUP_BG_COLOR
+            bg="white"
         )
-        time_icon_label.pack(side='left', padx=(5, 0))
+        time_icon_label.pack(side='left', padx=(2, 0))
         time_icon_label.image = time_icon_photo
 
         # Combobox style
         style = ttk.Style()
-        style.configure("TCombobox", foreground=PICK_DATE_PREFILLED_COLOR, background="white")  
+        style.layout('Borderless.TCombobox', [
+            ('Combobox.padding', {'children': [
+                ('Combobox.background', {'children': [
+                    ('Combobox.dropdownarrow', {'side': 'right', 'sticky': 'ns'}),
+                    ('Combobox.textarea', {'sticky': 'nswe'})
+                ]})
+            ]})
+        ])
+        style.configure("Borderless.TCombobox", 
+                        foreground=PICK_DATE_PREFILLED_COLOR,
+                        background="white",
+                        fieldbackground="white",
+                        borderwidth=0,
+                        highlightthickness=0,
+                        arrowsize=12)
+        style.map('Borderless.TCombobox', 
+                  fieldbackground=[('readonly', 'white')],
+                  selectbackground=[('readonly', 'white')],
+                  selectforeground=[('readonly', PICK_DATE_PREFILLED_COLOR)])
 
         self.End_time_combobox = ttk.Combobox(
-            time_frame, 
+            combobox_frame, 
             values=TIME_OPTIONS, 
             font=FONT_SMALL, 
-            width=6, 
-            style="TCombobox"
+            width=5,  # Keep this width for the combobox itself
+            style="Borderless.TCombobox",
+            state="readonly"
         )
-        self.End_time_combobox.pack(side='left', padx=(5, 0))
+        self.End_time_combobox.pack(side='left', padx=(0, 2))
         self.End_time_combobox.set("12:00")
+
+        # Function to adjust dropdown width
+        def adjust_dropdown_width():
+            self.End_time_combobox.config(width=8)  # Adjust this value to make the dropdown wider
+            self.End_time_combobox.after(10, lambda: self.End_time_combobox.config(width=5))  # Reset width after dropdown opens
+
+        # Set the postcommand to adjust the width
+        self.End_time_combobox.config(postcommand=adjust_dropdown_width)
+
+        # Bind event to change border color on focus
+        combobox_frame.bind("<FocusIn>", lambda e: combobox_frame.config(highlightbackground="blue", highlightthickness=2))
+        combobox_frame.bind("<FocusOut>", lambda e: combobox_frame.config(highlightbackground="gray75", highlightthickness=1))
+        self.End_time_combobox.bind("<FocusIn>", lambda e: combobox_frame.focus_set())
 
         # Confirm Button
         confirm_button = tk.Button(
