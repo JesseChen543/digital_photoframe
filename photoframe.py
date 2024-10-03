@@ -15,7 +15,7 @@ class PhotoFrameApp:
         self.root = root
         self.root.title("Image Display with Clickable Icon")
 
-        self.userid = 2  
+        self.userid = 2  # Set the user ID (you might want to make this configurable)
         # Initialize saved inputs
         self.saved_notes = []
         self.list_button = None  # Initialize list_button as None
