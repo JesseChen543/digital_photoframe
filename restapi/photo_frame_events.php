@@ -40,7 +40,9 @@ function handleGet($pdo, $input) {
         return;
     }
     $user = $input['user'];
-    $sql = "SELECT event_name, start_time, end_time, location, description, privacy, story, users_attending FROM Events JOIN Event_users ON event_id = event WHERE user=:user AND privacy = 'Not Private'";
+    $sql = "SELECT event_name, start_time, end_time, location, description, 
+    privacy, story, users_attending FROM Events JOIN Event_users ON 
+    event_id = event WHERE user=:user AND privacy = 'Not Private'";
     $stmt = $pdo->prepare($sql);
 
     try {
