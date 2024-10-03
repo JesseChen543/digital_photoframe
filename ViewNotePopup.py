@@ -20,7 +20,7 @@ class NoteItem:
 
         self.create_note()
 
-    def create_note(self):
+    def show_note(self):
         # Create the main frame for the note
         self.note_frame = Frame(self.parent, bg=INPUT_COLOR, bd=1, relief="solid")
         self.note_frame.pack(fill="x", padx=20, pady=10)
