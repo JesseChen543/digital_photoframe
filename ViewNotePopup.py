@@ -18,7 +18,7 @@ class NoteItem:
         self.arrow_icon = None
         self.details_label = None
 
-        self.create_note()
+        self.show_note()
 
     def show_note(self):
         # Create the main frame for the note

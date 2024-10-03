@@ -9,7 +9,7 @@ from PopupHeader import PopupHeader
 from utils import center_window_parent
 
 class AddNotePopup:
-    def __init__(self, root, app=None):
+    def __init__(self, root, app):
         self.root = root
         self.app = app  
         self.popup_window = None
@@ -31,8 +31,8 @@ class AddNotePopup:
             # Hide the default title bar
             self.popup_window.overrideredirect(True)
 
-            # Center the popup window relative to the root window
-            center_window_parent(self.popup_window, POPUP_WIDTH, POPUP_HEIGHT)
+            # Bind the closing event
+            self.popup_window.protocol("WM_DELETE_WINDOW", self.close_popup)
 
             main_frame = Frame(self.popup_window, bg=POPUP_BG_COLOR)
             main_frame.pack(fill="both", expand=True)
@@ -129,6 +129,13 @@ class AddNotePopup:
             )
             submit_button.pack(anchor="e", padx=10, pady=10)
 
+            # Center the popup window after all content has been added
+            self.popup_window.update_idletasks()
+            center_window_parent(self.popup_window, self.popup_window.winfo_width(), self.popup_window.winfo_height())
+
+            # Register this window with the main app
+            self.app.register_child_window(self.popup_window)
+
     def submit_note(self):
         name = self.list_name_entry.get().strip()
         if name:
@@ -154,18 +161,29 @@ class AddNotePopup:
 
     # Method to close the popup
     def close_popup(self):
-        if self.popup_window:
-            self.popup_window.destroy()
-            self.popup_window = None
+        if self.pick_date_popup and self.pick_date_popup.winfo_exists():
+            self.on_window_close(self.pick_date_popup)
+            self.pick_date_popup = None
+        self.on_window_close(self.popup_window)
+        self.popup_window = None
 
     def pick_date(self):
         self.pick_date_popup = tk.Toplevel(self.root)
         self.pick_date_popup.configure(bg=POPUP_BG_COLOR)
 
-        # Reset the selected day button reference to None
-        self.selected_day_button = None  # Reset to prevent referencing a destroyed button
+        # Hide the default title bar
+        self.pick_date_popup.overrideredirect(True)
+        
+        # Bind the closing event
+        self.pick_date_popup.protocol("WM_DELETE_WINDOW", self.close_pick_date_popup)
 
-        # Configure the grid for the popup window to align everything to the left
+        # Center the pick_date_popup
+        center_window_parent(self.pick_date_popup, 240, 200) 
+
+        # Reset the selected day button reference to None
+        self.selected_day_button = None
+
+        # Configure the grid for the popup window
         self.pick_date_popup.grid_columnconfigure(0, weight=1)
 
         # Title Label 
@@ -176,21 +194,21 @@ class AddNotePopup:
             bg=POPUP_BG_COLOR, 
             fg=PICK_DATE_TEXT_COLOR
         )
-        title_label.grid(row=0, column=0, sticky='w', padx=10, pady=5)  # Align to left
+        title_label.grid(row=0, column=0, sticky='w', padx=15, pady=10)
 
         # Days of the week
         days_frame = tk.Frame(self.pick_date_popup, bg=POPUP_BG_COLOR)
-        days_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')  # Align left
+        days_frame.grid(row=1, column=0, padx=15, pady=5, sticky='w')
         days_of_week = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
         
         for i, day in enumerate(days_of_week):
             tk.Label(
                 days_frame, 
                 text=day, 
-                bg="white", 
+                bg=POPUP_BG_COLOR, 
                 fg=PICK_DATE_TEXT_COLOR, 
-                font=FONT_MEDIUM
-            ).grid(row=0, column=i, padx=5, pady=5, sticky='w')
+                font=FONT_SMALL
+            ).grid(row=0, column=i, padx=2, pady=2)
 
         def select_day(button, day):
             if self.selected_day_button:
@@ -198,7 +216,6 @@ class AddNotePopup:
             button.config(bg=BUTTON_COLOR)
             self.selected_day_button = button
             self.selected_day = day
-            print(f"Selected day: {day}")
 
         for i in range(1, 8):
             day_button = tk.Button(
@@ -206,76 +223,73 @@ class AddNotePopup:
                 text=str(i), 
                 bg=POPUP_BG_COLOR, 
                 fg=PICK_DATE_TEXT_COLOR,
-                font=FONT_MEDIUM, 
+                font=FONT_SMALL, 
                 width=2, 
                 height=1, 
                 borderwidth=0,       
                 highlightthickness=0  
             )
-            day_button.grid(row=1, column=i-1, padx=5, pady=5)
+            day_button.grid(row=1, column=i-1, padx=2, pady=2)
             day_button.config(command=lambda b=i, btn=day_button: select_day(btn, b))
 
-        # Time selection frame with icon and time dropdown
+        # Time selection frame
         time_frame = tk.Frame(self.pick_date_popup, bg=POPUP_BG_COLOR)
-        time_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
+        time_frame.grid(row=2, column=0, padx=15, pady=10, sticky='w')
 
-        # Label for the 'End' next to the combobox
         tk.Label(
             time_frame, 
             text="End", 
             bg=POPUP_BG_COLOR, 
             fg=PICK_DATE_TEXT_COLOR, 
-            font=FONT_MEDIUM
-        ).grid(row=0, column=0, padx=(5, 0), sticky='w')
-        
-        # Custom frame to hold the Combobox and icon together
-        combobox_with_icon_frame = tk.Frame(time_frame, bg=POPUP_BG_COLOR)
-        combobox_with_icon_frame.grid(row=0, column=2, padx=0, pady=5)
+            font=FONT_SMALL
+        ).pack(side='left', padx=(0, 5))
 
-        # Time icon (loaded from file)
+        # Time icon
         time_icon_image = Image.open(TIME_ICON)
-        time_icon_image = time_icon_image.resize((20, 20), Image.LANCZOS)
+        time_icon_image = time_icon_image.resize((16, 16), Image.LANCZOS)
         time_icon_photo = ImageTk.PhotoImage(time_icon_image)
         
-        # Create a button for the time icon and place it next to the combobox
-        time_icon_button = tk.Button(
-            combobox_with_icon_frame, 
+        time_icon_label = tk.Label(
+            time_frame, 
             image=time_icon_photo, 
-            bg=POPUP_BG_COLOR, 
-            relief="flat", 
-            bd=0
+            bg=POPUP_BG_COLOR
         )
-        time_icon_button.grid(row=0, column=1, padx=(0, 5))
+        time_icon_label.pack(side='left', padx=(5, 0))
+        time_icon_label.image = time_icon_photo
 
-        # Define a custom style for the Combobox
+        # Combobox style
         style = ttk.Style()
         style.configure("TCombobox", foreground=PICK_DATE_PREFILLED_COLOR, background="white")  
 
-        # Create the Combobox with the custom style
         self.End_time_combobox = ttk.Combobox(
-            combobox_with_icon_frame, 
+            time_frame, 
             values=TIME_OPTIONS, 
-            font=FONT_MEDIUM, 
-            width=8, 
+            font=FONT_SMALL, 
+            width=6, 
             style="TCombobox"
         )
-        self.End_time_combobox.grid(row=0, column=0, padx=(10, 5))
+        self.End_time_combobox.pack(side='left', padx=(5, 0))
         self.End_time_combobox.set("12:00")
 
-        # Keep a reference to the image to prevent garbage collection
-        time_icon_button.image = time_icon_photo
-
-        # Confirm Button (use grid)
+        # Confirm Button
         confirm_button = tk.Button(
             self.pick_date_popup, 
             text="Confirm", 
             bg=BUTTON_COLOR, 
             fg="white", 
-            font=FONT_MEDIUM, 
+            font=FONT_SMALL, 
             relief="flat", 
             command=self.confirm_selection
         )
-        confirm_button.grid(row=3, column=0, pady=10, padx=10, sticky='e')  
+        confirm_button.grid(row=3, column=0, pady=10, padx=15, sticky='e')
+
+        # Force focus and lift the window
+        self.pick_date_popup.focus_force()
+        self.pick_date_popup.update()
+        self.pick_date_popup.lift()
+
+        # Register this window with the main app
+        self.app.register_child_window(self.pick_date_popup)
 
     def confirm_selection(self):
         # Retrieve the selected time from the Combobox
@@ -317,6 +331,11 @@ class AddNotePopup:
             messagebox.showwarning("Selection Error", "Please select both a day and a time.")
 
     def close_pick_date_popup(self):
-        if self.pick_date_popup:
-            self.pick_date_popup.destroy()
-            self.pick_date_popup = None
+        self.on_window_close(self.pick_date_popup)
+        self.pick_date_popup = None
+
+    def on_window_close(self, window):
+        """Generic method to handle window closing"""
+        if window:
+            self.app.unregister_child_window(window)
+            window.destroy()

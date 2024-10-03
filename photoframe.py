@@ -15,6 +15,9 @@ class PhotoFrameApp:
         self.root = root
         self.root.title("Image Display with Clickable Icon")
 
+        # Initialize list to keep track of child windows
+        self.child_windows = []
+
         self.userid = 2  # Set the user ID (you might want to make this configurable)
         # Initialize saved inputs
         self.saved_notes = []
@@ -23,7 +26,6 @@ class PhotoFrameApp:
 
         # Initialize NotePopup
         self.add_note_popup = AddNotePopup(self.root, self)
-
         self.view_note_popup = ViewNotePopup(self.root, self)
         
 
@@ -45,6 +47,8 @@ class PhotoFrameApp:
         center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.root.bind('<Escape>', self.quit_app)
 
+        # Bind the closing event
+        self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
     def fetch_and_display_image(self):
         # Fetch image URL from API
@@ -115,7 +119,20 @@ class PhotoFrameApp:
 
 
     def quit_app(self, event=None):
+        # Close all child windows
+        for child in self.child_windows:
+            if child.winfo_exists():
+                child.destroy()
+        # Close the main window
         self.root.quit()
+
+    def register_child_window(self, window):
+        """Register a child window."""
+        self.child_windows.append(window)
+
+    def unregister_child_window(self, window):
+        """Unregister a child window."""
+        self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
 if __name__ == "__main__":
     root = tk.Tk()
