@@ -199,7 +199,7 @@ class AddNotePopup:
         # Days of the week
         days_frame = tk.Frame(self.pick_date_popup, bg=POPUP_BG_COLOR)
         days_frame.grid(row=1, column=0, padx=15, pady=5, sticky='w')
-        days_of_week = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        days_of_week = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         
         for i, day in enumerate(days_of_week):
             tk.Label(
@@ -293,46 +293,51 @@ class AddNotePopup:
 
     def confirm_selection(self):
         # Retrieve the selected time from the Combobox
-        self.selected_time = self.End_time_combobox.get()  # Get time from Combobox
+        self.selected_time = self.End_time_combobox.get()
 
         if self.selected_day is not None and self.selected_time:
             # Get the current date and time
             current_time = datetime.now()
-            # Get the current day of the week 
+            # Get the current day of the week (0 = Monday, 6 = Sunday)
             current_day = current_time.weekday()
             
-            # Create a datetime object for the selected day and time
-            selected_datetime = current_time.replace(hour=int(self.selected_time.split(':')[0]), 
-                                                    minute=int(self.selected_time.split(':')[1]), 
-                                                    second=0, 
-                                                    microsecond=0)
+            # Convert selected_day to match current_day format (0 = Monday, 6 = Sunday)
+            selected_day_adjusted = (self.selected_day - 1) % 7
+
+            # Create a datetime object for the selected time
+            selected_time = datetime.strptime(self.selected_time, "%H:%M").time()
+            selected_datetime = datetime.combine(current_time.date(), selected_time)
 
             # Check if the selected day is today
-            if self.selected_day == current_day:
+            if selected_day_adjusted == current_day:
                 # If it's today, ensure the selected time is later than the current time
                 if selected_datetime <= current_time:
-                    print(current_time)
                     messagebox.showwarning("Time Error", "Please select a time later than the current time.")
+                    self.pick_date_popup.focus_force()
                     return
-
-            # Store or use the selected day and time as needed
-            print(f"Selected day: {self.selected_day}, Time: {self.selected_time}")
+            elif selected_day_adjusted < current_day:
+                # If the selected day is earlier in the week, assume it's for next week
+                messagebox.showinfo("Date Info", "The selected day is in the next week.")
+                self.pick_date_popup.focus_force()
 
             # Update the Choose Date button text
-            day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-            day_text = day_names[self.selected_day - 1]
+            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            day_text = day_names[selected_day_adjusted]
             self.choose_date_button.config(text=f"{day_text} {self.selected_time}")
             
             # Optionally, store it in the app or a variable
-            self.app.saved_end_value = f"Day: {self.selected_day}, Time: {self.selected_time}" 
+            self.app.saved_end_value = f"Day: {day_text}, Time: {self.selected_time}" 
             
             self.close_pick_date_popup()  # Close the pick date popup
+            self.popup_window.focus_force()  # Ensure focus returns to the main AddNotePopup window
         else:
             messagebox.showwarning("Selection Error", "Please select both a day and a time.")
+            self.pick_date_popup.focus_force()
 
     def close_pick_date_popup(self):
         self.on_window_close(self.pick_date_popup)
         self.pick_date_popup = None
+        self.popup_window.focus_force()  # Ensure focus returns to the main AddNotePopup window
 
     def on_window_close(self, window):
         """Generic method to handle window closing"""
