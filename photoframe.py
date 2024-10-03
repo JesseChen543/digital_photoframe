@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from datetime import datetime
 from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
+from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
 import requests  # To fetch the image from the URL
 from io import BytesIO  # To convert the image data into a usable format
@@ -27,6 +28,7 @@ class PhotoFrameApp:
         # Initialize NotePopup
         self.add_note_popup = AddNotePopup(self.root, self)
         self.view_note_popup = ViewNotePopup(self.root, self)
+        self.view_schedule_popup = ViewSchedulePopup(self.root, self)
         
 
         # Fetch and display the image
@@ -37,7 +39,7 @@ class PhotoFrameApp:
                                    WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
 
         CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                                       UPCOMING_SCHEDULE_ICON, self.add_note_popup.add_note)
+                                       UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
 
         # Create the list icon button if self.saved_notes is not None
         if self.saved_notes:
