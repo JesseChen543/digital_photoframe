@@ -1,6 +1,6 @@
 # Screen dimensions
-SCREEN_WIDTH = 378
-SCREEN_HEIGHT = 624
+SCREEN_WIDTH = 480
+SCREEN_HEIGHT = 800
 
 #icon dimensions 
 ICON_DIMENSION = (52, 56)
