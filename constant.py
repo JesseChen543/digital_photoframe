@@ -35,6 +35,8 @@ LIST_ICON = "pictures/list.png"
 DROPDOWN_ICON = "pictures/dropdown.png"
 DROPDOWN_ICON_INVERSED = "pictures/dropdownicon_inversed.png"
 TIME_ICON = "pictures/time_icon.png"
+MEMBER_ICON = "pictures/membericon.png"
+SCHEDULE_PICTURE = "pictures/schedule pic.png"
 
 # Colors
 LANDING_BG_COLOR = "#5081FF"

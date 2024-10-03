@@ -1,17 +1,17 @@
 import tkinter as tk
-from tkinter import Frame, Label, Button
+from tkinter import Frame, Label, Canvas, Scrollbar
 from PIL import Image, ImageTk
-from constant import *  
-from PopupHeader import PopupHeader  
+from constant import *
+from PopupHeader import PopupHeader
 from utils import center_window_parent
 
-class ViewNotePopup:
+class ViewSchedulePopup:
     def __init__(self, root, app):
         self.root = root
         self.app = app
-        self.popup_window = None  
+        self.popup_window = None
 
-    def show_list(self):
+    def show_schedules(self):
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = tk.Toplevel(self.root)
             self.popup_window.configure(bg=POPUP_BG_COLOR)
@@ -29,114 +29,86 @@ class ViewNotePopup:
             # Utilize PopupHeader to create the header
             PopupHeader(parent=self.main_frame, title_text="Upcoming Schedule", on_close=self.close_popup)
 
-            # Create a note item using the saved values
-            self.create_note_item(self.app.saved_list_name, self.app.saved_end_value)
+            # Create a canvas with scrollbar for the schedule items
+            self.canvas = Canvas(self.main_frame, bg=POPUP_BG_COLOR)
+            self.scrollbar = Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
+            self.scrollable_frame = Frame(self.canvas, bg=POPUP_BG_COLOR)
+
+            self.scrollable_frame.bind(
+                "<Configure>",
+                lambda e: self.canvas.configure(
+                    scrollregion=self.canvas.bbox("all")
+                )
+            )
+
+            self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+            self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+            self.canvas.pack(side="left", fill="both", expand=True)
+            self.scrollbar.pack(side="right", fill="y")
+
+            # Add schedule items
+            self.add_schedule_item("Movie #1 at the Cinemas", "27/09/2024 22:00", "EVENT CINEMAS, BRISBANE CITY", 
+                                   "Watching Movie #1 with the Das and the boys.", [MEMBER_ICON, MEMBER_ICON, MEMBER_ICON, MEMBER_ICON])
+            self.add_schedule_item("Movie #1 at the Cinemas", "27/09/2024 22:00", "EVENT CINEMAS, BRISBANE CITY", 
+                                   "Watching Movie #1 with the Das and the boys.", [MEMBER_ICON, MEMBER_ICON, MEMBER_ICON, MEMBER_ICON])
 
     def close_popup(self):
         if self.popup_window:
             self.popup_window.destroy()
             self.popup_window = None
 
-    def create_note_item(self, title, end_time):
-        """Function to create a note item with a title, end time, and dropdown arrow using place."""
-        self.note_frame = Frame(self.main_frame, bg=INPUT_COLOR, bd=1, relief="solid")
-        self.note_frame.pack(fill="x", padx=20, pady=10)
-        self.note_frame.update_idletasks()  # Ensure frame dimensions are updated
+    def add_schedule_item(self, title, date_time, location, description, attendees):
+        item_frame = Frame(self.scrollable_frame, bg="white", bd=1, relief="solid")
+        item_frame.pack(fill="x", padx=5, pady=5)
 
-        self.note_frame.config(width=FRAME_WIDTH, height=FRAME_HEIGHT_COLLAPSED)
+        # Use grid layout for better control
+        item_frame.grid_columnconfigure(0, weight=1)
+        item_frame.grid_columnconfigure(1, minsize=80)  # Adjust the width as needed
 
-        # Note Title
-        note_title_label = Label(self.note_frame, text=title, font=FONT_MEDIUM, bg=INPUT_COLOR)
-        note_title_label.place(x=10, y=5)
+        # Title
+        Label(item_frame, text=title, font=FONT_MEDIUM, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
 
-        # End Time Icon
+        # Date and Time
+        Label(item_frame, text=date_time, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=10)
+
+        # Location
+        Label(item_frame, text=location, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=10)
+
+        # Description
+        description_label = Label(item_frame, text=description, font=FONT_SMALL, bg="white", anchor="w", wraplength=POPUP_WIDTH-120, justify="left")
+        description_label.grid(row=3, column=0, sticky="w", padx=10, pady=(5, 0))
+
+        # Attendees
+        attendees_frame = Frame(item_frame, bg="white")
+        attendees_frame.grid(row=4, column=0, sticky="w", padx=10, pady=(5, 10))
+
+        for i, attendee in enumerate(attendees):
+            try:
+                img = Image.open(attendee)
+                img = img.resize((25, 25), Image.LANCZOS)  # Smaller attendee icons
+                photo = ImageTk.PhotoImage(img)
+                label = Label(attendees_frame, image=photo, bg="white")
+                label.image = photo
+                label.pack(side="left", padx=(0, 3))
+            except Exception as e:
+                print(f"Error loading attendee image: {e}")
+
+        # Add image (placeholder for now)
         try:
-            time_icon_image = Image.open(TIME_ICON)
-            time_icon_image = time_icon_image.resize((10, 10), Image.LANCZOS)
-            self.time_icon_photo = ImageTk.PhotoImage(time_icon_image)
+            img = Image.open(SCHEDULE_PICTURE)
+            img = img.resize((70, 120), Image.LANCZOS)  # Smaller placeholder image
+            photo = ImageTk.PhotoImage(img)
+            image_label = Label(item_frame, image=photo, bg="white")
+            image_label.image = photo
+            image_label.grid(row=0, column=1, rowspan=5, padx=(0, 10), pady=10, sticky="ne")
         except Exception as e:
-            print(f"Error loading TIME_ICON: {e}")
-            self.time_icon_photo = None
-
-        if self.time_icon_photo:
-            time_icon_label = Label(self.note_frame, image=self.time_icon_photo, bg=INPUT_COLOR)
-            time_icon_label.place(x=10, y=28)  # Adjusted y from 30 to 25
-        else:
-            # If the icon fails to load, use a smaller placeholder
-            time_icon_label = Label(self.note_frame, text="⌚", font=FONT_SMALL, bg=INPUT_COLOR)
-            time_icon_label.place(x=10, y=25)  # Adjusted y from 30 to 25
-
-        # End Time Label
-        end_time_label = Label(
-            self.note_frame,
-            text=end_time,
-            font=FONT_SMALL,
-            fg=CLOSE_COLOR,
-            bg=INPUT_COLOR
-        )
-        # Position end_time_label right next to the icon with adjusted y
-        end_time_label.place(x=25, y=25)  
-
-        # Load and resize the dropdown icon
-        try:
-            dropdown_icon_image = Image.open(DROPDOWN_ICON)
-            dropdown_icon_image = dropdown_icon_image.resize((10, 10), Image.LANCZOS)
-            self.dropdown_photo = ImageTk.PhotoImage(dropdown_icon_image)
-        except Exception as e:
-            print(f"Error loading DROPDOWN_ICON: {e}")
-            self.dropdown_photo = None
-
-        # Create a label with the dropdown icon
-        if self.dropdown_photo:
-            arrow_icon = Label(self.note_frame, image=self.dropdown_photo, bg=INPUT_COLOR)
-            arrow_icon.image = self.dropdown_photo  # Keep a reference to prevent garbage collection
-            arrow_icon.place(x=FRAME_WIDTH - 20, y=20)
-        else:
-            arrow_icon = Label(self.note_frame, text="▼", font=FONT_SMALL, bg=INPUT_COLOR)
-            arrow_icon.place(x=FRAME_WIDTH - 20, y=20)
-
-        # Bind click event to toggle note details
-        # Use a consistent method reference to avoid creating multiple instances
-        toggle = lambda event: self.toggle_note_details()
-        self.note_frame.bind("<Button-1>", toggle)
-        note_title_label.bind("<Button-1>", toggle)
-        time_icon_label.bind("<Button-1>", toggle)
-        end_time_label.bind("<Button-1>", toggle)
-        arrow_icon.bind("<Button-1>", toggle)
-
-    def toggle_note_details(self):
-        """Toggle the visibility of note details."""
-        if self.details_label and self.details_label.winfo_exists():
-            # Details are visible; destroy them and collapse the frame
-            self.details_label.destroy()
-            self.details_label = None
-            self.note_frame.config(height=50)  # Collapse back to original height
-        else:
-            # Details are not visible; create them and expand the frame
-            self.details_label = Label(
-                self.note_frame,
-                text=self.app.saved_note_value, 
-                font=FONT_SMALL, 
-                bg=INPUT_COLOR, 
-                wraplength=FRAME_WIDTH - 20, 
-                justify="left"
-            )
-            self.details_label.place(x=10, y=45)  
-
-            self.note_frame.config(height=100)  
-
-    def quit_app(self):
-        self.root.quit()
-
+            print(f"Error loading placeholder image: {e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()  # Hide the main root window if you only want the popup to show
-    app = type('', (), {
-        'saved_list_name': 'Sample Note', 
-        'saved_end_value': 'Friday 13:00', 
-        'saved_note_value': 'This is a sample note description that appears when the dropdown is clicked.'
-    })()
-    note_page = ViewNotePopup(root, app)
-    note_page.show_list()
+    app = type('', (), {})()
+    schedule_popup = ViewSchedulePopup(root, app)
+    schedule_popup.show_schedules()
     root.mainloop()
