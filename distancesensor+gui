@@ -1,0 +1,42 @@
+from gpiozero import DistanceSensor
+from time import sleep
+import tkinter as tk
+from PIL import Image, ImageTk
+
+# Initialize the distance sensor
+sensor = DistanceSensor(echo=27, trigger=17)
+
+# Function to update the transparency of the icon
+def update_transparency():
+    distance = sensor.distance * 100  # Convert to cm
+    print('Distance: {:.2f} cm'.format(distance))
+
+    if distance < 45:
+        # If distance is less than 45 cm, make the icon opaque
+        icon_label.image = icon_opaque
+        icon_label.configure(image=icon_opaque)
+    else:
+        # If distance is greater than or equal to 45 cm, make the icon transparent
+        icon_label.image = icon_transparent
+        icon_label.configure(image=icon_transparent)
+
+    # Schedule the next update
+    root.after(300, update_transparency)  # Update every 300 ms
+
+# Create the main window
+root = tk.Tk()
+root.title("Distance Sensor GUI")
+
+# Load images for opaque and transparent icons
+icon_opaque = ImageTk.PhotoImage(Image.open("icon_opaque.png"))  # Replace with your icon
+icon_transparent = ImageTk.PhotoImage(Image.open("icon_transparent.png"))  # Replace with your icon
+
+# Create a label to display the icon
+icon_label = tk.Label(root, image=icon_opaque)
+icon_label.pack(pady=20)
+
+# Start the distance monitoring
+update_transparency()
+
+# Start the Tkinter event loop
+root.mainloop()
