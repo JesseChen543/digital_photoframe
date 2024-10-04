@@ -90,15 +90,15 @@ class PhotoFrameApp:
 
     def add_buttons(self):
         # Add add-note icon using CanvasButton
-        CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
+        self.add_note_button = CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
                      WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
 
-        CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
+        self.view_schedule_button = CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
                      UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
 
         # Create the list icon button if self.saved_notes is not None
         if self.saved_notes:
-            CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
+            self.view_note_button = CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
                          LIST_ICON, self.view_note_popup.show_notes)
 
     def update_view_note_button(self):

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Frame, Label, Canvas, Scrollbar
+from tkinter import Frame, Label, Canvas, Scrollbar, ttk
 from PIL import Image, ImageTk
 from constant import *
 from PopupHeader import PopupHeader
@@ -33,23 +33,34 @@ class ViewSchedulePopup:
             # Utilize PopupHeader to create the header
             PopupHeader(parent=self.main_frame, title_text="Upcoming Schedule", on_close=self.close_popup)
 
-            # Create a canvas with scrollbar for the schedule items
-            self.canvas = Canvas(self.main_frame, bg=POPUP_BG_COLOR)
-            self.scrollbar = Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
-            self.scrollable_frame = Frame(self.canvas, bg=POPUP_BG_COLOR)
+            # Create a frame to contain the canvas and scrollbar with a fixed height
+            HEADER_HEIGHT = 50  # Adjust this value based on your actual header height
+            content_height = POPUP_HEIGHT - HEADER_HEIGHT
 
+            content_frame = Frame(self.main_frame, bg=POPUP_BG_COLOR, height=content_height)
+            content_frame.pack(fill="both", expand=False)
+            content_frame.pack_propagate(False)  # Prevent content_frame from resizing to fit its children
+
+            # Create a canvas with scrollbar for the schedule items
+            self.canvas = Canvas(content_frame, bg=POPUP_BG_COLOR)
+            self.scrollbar = Scrollbar(content_frame, orient="vertical", command=self.canvas.yview)
+
+            self.canvas.configure(yscrollcommand=self.scrollbar.set)
+            self.scrollbar.pack(side="right", fill="y")
+            self.canvas.pack(side="left", fill="both", expand=True)
+
+            # Create a frame inside the canvas to hold the schedule items
+            self.scrollable_frame = Frame(self.canvas, bg=POPUP_BG_COLOR)
+            self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+            self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+            # Update the scroll region when the size of the scrollable_frame changes
             self.scrollable_frame.bind(
                 "<Configure>",
                 lambda e: self.canvas.configure(
                     scrollregion=self.canvas.bbox("all")
                 )
             )
-
-            self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-            self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-            self.canvas.pack(side="left", fill="both", expand=True)
-            self.scrollbar.pack(side="right", fill="y")
 
             # Fetch and add schedule items
             self.fetch_schedule_items()
@@ -70,10 +81,11 @@ class ViewSchedulePopup:
                 end_time = datetime.strptime(item['end_time'], "%Y-%m-%d %H:%M:%S")
                 
                 # Only create schedule item if privacy is "Not Private" and end time is not earlier than current time
-                if item['privacy'] == "Not Private" and end_time <= current_time:
+                if item['privacy'] == "Not Private" and end_time >= current_time:
                     self.add_schedule_item(
                         item['event_name'],
                         item['start_time'],
+                        item['end_time'],
                         item.get('location', 'No location'),
                         item.get('description', ''),
                         item.get('story', ''),
@@ -82,31 +94,35 @@ class ViewSchedulePopup:
         except Exception as e:
             print(f"Error fetching schedule data: {e}")
 
-    def add_schedule_item(self, title, date_time, location, description, story, attendees):
-        item_frame = Frame(self.scrollable_frame, bg="white", bd=1, relief="solid")
-        item_frame.pack(fill="x", padx=5, pady=3)  # Reduced vertical padding
+    def add_schedule_item(self, title, start_time, end_time, location, description, story, attendees):
+        item_frame = Frame(self.scrollable_frame, bg="white", borderwidth=1, relief="solid")
+        item_frame.pack(fill="x", padx=5, pady=5)  # Adjust outer padding as needed
 
         # Use grid layout for better control
         item_frame.grid_columnconfigure(0, weight=1)
-        item_frame.grid_columnconfigure(1, minsize=60)  # Reduced width for image column
+        item_frame.grid_columnconfigure(1, minsize=60) 
 
         # Title
-        Label(item_frame, text=title, font=FONT_SMALL, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
+        Label(item_frame, text=title, font=FONT_MEDIUM, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
 
-        # Date and Time
-        formatted_date_time = self.format_date_time(date_time)
-        Label(item_frame, text=formatted_date_time, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=5)
+        # Start Time
+        formatted_start_time = self.format_date_time(start_time)
+        Label(item_frame, text=f"Start: {formatted_start_time}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=5)
+
+        # End Time
+        formatted_end_time = self.format_date_time(end_time)
+        Label(item_frame, text=f"End: {formatted_end_time}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=5)
 
         # Location
-        Label(item_frame, text=location if location else "No location", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=5)
+        Label(item_frame, text=f"Location: {location if location else 'No location'}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=3, column=0, sticky="w", padx=5)
 
         # Description
         description_label = Label(item_frame, text=description, font=FONT_SMALL, bg="white", anchor="w", wraplength=POPUP_WIDTH-100, justify="left")
-        description_label.grid(row=3, column=0, sticky="w", padx=5, pady=(2, 0))
+        description_label.grid(row=4, column=0, sticky="e", padx=5, pady=(2, 0))
 
         # Attendees
         attendees_frame = Frame(item_frame, bg="white")
-        attendees_frame.grid(row=4, column=0, sticky="w", padx=5, pady=(2, 5))
+        attendees_frame.grid(row=4, column=0, sticky="e", padx=5, pady=(0, 5))  # Reduced top padding
 
         for i, attendee in enumerate(attendees):
             try:
@@ -115,7 +131,7 @@ class ViewSchedulePopup:
                 photo = ImageTk.PhotoImage(img)
                 label = Label(attendees_frame, image=photo, bg="white")
                 label.image = photo
-                label.pack(side="left", padx=(0, 2))
+                label.pack(side="left", padx=(0, 1), pady=0)  # No vertical padding
             except Exception as e:
                 print(f"Error loading attendee image: {e}")
 
@@ -127,11 +143,11 @@ class ViewSchedulePopup:
             else:
                 img = Image.open(story) if story else Image.open(SCHEDULE_PICTURE)
             
-            img = img.resize((100, 100), Image.LANCZOS)  # Fixed size for consistency
+            img = img.resize((100, 120), Image.LANCZOS)  
             photo = ImageTk.PhotoImage(img)
             image_label = Label(item_frame, image=photo, bg="white")
             image_label.image = photo
-            image_label.grid(row=0, column=1, rowspan=5, padx=5, pady=5, sticky="ne")
+            image_label.grid(row=0, column=1, rowspan=6, padx=5, pady=5, sticky="ne")
         except Exception as e:
             print(f"Error loading image: {e}")
           
@@ -141,6 +157,9 @@ class ViewSchedulePopup:
         dt = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
         # Format it as desired
         return dt.strftime("%d/%m/%Y %H:%M")
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
 if __name__ == "__main__":
     root = tk.Tk()
