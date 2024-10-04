@@ -153,7 +153,7 @@ class AddNotePopup:
             messagebox.showinfo("Success", "Note uploaded successfully!")
             
             # Update the list button after submitting the note
-            self.app.update_list_button()
+            self.app.update_view_note_button()
             
             self.close_popup()
         else:

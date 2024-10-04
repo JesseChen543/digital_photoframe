@@ -6,8 +6,8 @@ from AddNotePopup import AddNotePopup
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
-import requests  # To fetch the image from the URL
-from io import BytesIO  # To convert the image data into a usable format
+import requests  
+from io import BytesIO  
 
 from constant import *
 
@@ -19,10 +19,15 @@ class PhotoFrameApp:
         # Initialize list to keep track of child windows
         self.child_windows = []
 
-        self.userid = 2  # Set the user ID (you might want to make this configurable)
+        self.event_id = 2  
         # Initialize saved inputs
         self.saved_notes = []
-        self.list_button = None  # Initialize list_button as None
+
+        # Initialize buttons 
+        self.view_note_button = None  
+        self.view_schedule_button = None
+        self.add_note_button = None
+
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
         # Initialize NotePopup
@@ -30,21 +35,12 @@ class PhotoFrameApp:
         self.view_note_popup = ViewNotePopup(self.root, self)
         self.view_schedule_popup = ViewSchedulePopup(self.root, self)
         
+        # Create canvas first
+        self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
 
         # Fetch and display the image
         self.fetch_and_display_image()
-
-        # Add add-note icon using CanvasButton
-        CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                                   WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
-
-        CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                                       UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
-
-        # Create the list icon button if self.saved_notes is not None
-        if self.saved_notes:
-            CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                                       LIST_ICON, self.view_note_popup.show_notes)
 
         center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.root.bind('<Escape>', self.quit_app)
@@ -54,7 +50,7 @@ class PhotoFrameApp:
 
     def fetch_and_display_image(self):
         # Fetch image URL from API
-        api_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?uploader={self.userid}"
+        api_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={self.event_id}"
         try:
             response = requests.get(api_url)
             response.raise_for_status()  # Raise an exception for bad status codes
@@ -79,8 +75,6 @@ class PhotoFrameApp:
             image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)  # Resize
             bg_image = ImageTk.PhotoImage(image)
 
-            self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
-            self.canvas.pack(fill="both", expand=True)
             self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
             self.canvas.bg_image = bg_image
 
@@ -100,18 +94,18 @@ class PhotoFrameApp:
                      WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
 
         CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                     UPCOMING_SCHEDULE_ICON, self.add_note_popup.add_note)
+                     UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
 
         # Create the list icon button if self.saved_notes is not None
         if self.saved_notes:
             CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
                          LIST_ICON, self.view_note_popup.show_notes)
 
-    def update_list_button(self):
+    def update_view_note_button(self):
         """Creates the list button if it doesn't exist and there are saved notes."""
-        if self.saved_notes and not self.list_button:
+        if self.saved_notes and not self.view_note_button:
             print("Creating the list button")
-            self.list_button = CanvasButton(
+            self.view_note_button = CanvasButton(
                 self.canvas,
                 LIST_ICON_X,
                 LIST_ICON_Y,

@@ -4,6 +4,10 @@ from PIL import Image, ImageTk
 from constant import *
 from PopupHeader import PopupHeader
 from utils import center_window_parent
+import requests
+import json
+from datetime import datetime
+from io import BytesIO
 
 class ViewSchedulePopup:
     def __init__(self, root, app):
@@ -47,63 +51,96 @@ class ViewSchedulePopup:
             self.canvas.pack(side="left", fill="both", expand=True)
             self.scrollbar.pack(side="right", fill="y")
 
-            # Add schedule items
-            self.add_schedule_item("Movie #1 at the Cinemas", "27/09/2024 22:00", "EVENT CINEMAS, BRISBANE CITY", 
-                                   "Watching Movie #1 with the Das and the boys.", [MEMBER_ICON, MEMBER_ICON, MEMBER_ICON, MEMBER_ICON])
-            self.add_schedule_item("Movie #1 at the Cinemas", "27/09/2024 22:00", "EVENT CINEMAS, BRISBANE CITY", 
-                                   "Watching Movie #1 with the Das and the boys.", [MEMBER_ICON, MEMBER_ICON, MEMBER_ICON, MEMBER_ICON])
+            # Fetch and add schedule items
+            self.fetch_schedule_items()
 
     def close_popup(self):
         if self.popup_window:
             self.popup_window.destroy()
             self.popup_window = None
 
-    def add_schedule_item(self, title, date_time, location, description, attendees):
+    def fetch_schedule_items(self):
+        url = "https://deco3801-foundjesse.uqcloud.net/restapi/event.php?user=1"
+        try:
+            response = requests.get(url)
+            data = response.json()
+            current_time = datetime.now()
+            for item in data:
+                # Parse the end time
+                end_time = datetime.strptime(item['end_time'], "%Y-%m-%d %H:%M:%S")
+                
+                # Only create schedule item if privacy is "Not Private" and end time is not earlier than current time
+                if item['privacy'] == "Not Private" and end_time <= current_time:
+                    self.add_schedule_item(
+                        item['event_name'],
+                        item['start_time'],
+                        item.get('location', 'No location'),
+                        item.get('description', ''),
+                        item.get('story', ''),
+                        [MEMBER_ICON] * 4 
+                    )
+        except Exception as e:
+            print(f"Error fetching schedule data: {e}")
+
+    def add_schedule_item(self, title, date_time, location, description, story, attendees):
         item_frame = Frame(self.scrollable_frame, bg="white", bd=1, relief="solid")
-        item_frame.pack(fill="x", padx=5, pady=5)
+        item_frame.pack(fill="x", padx=5, pady=3)  # Reduced vertical padding
 
         # Use grid layout for better control
         item_frame.grid_columnconfigure(0, weight=1)
-        item_frame.grid_columnconfigure(1, minsize=80)  # Adjust the width as needed
+        item_frame.grid_columnconfigure(1, minsize=60)  # Reduced width for image column
 
         # Title
-        Label(item_frame, text=title, font=FONT_MEDIUM, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+        Label(item_frame, text=title, font=FONT_SMALL, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
 
         # Date and Time
-        Label(item_frame, text=date_time, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=10)
+        formatted_date_time = self.format_date_time(date_time)
+        Label(item_frame, text=formatted_date_time, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=5)
 
         # Location
-        Label(item_frame, text=location, font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=10)
+        Label(item_frame, text=location if location else "No location", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=5)
 
         # Description
-        description_label = Label(item_frame, text=description, font=FONT_SMALL, bg="white", anchor="w", wraplength=POPUP_WIDTH-120, justify="left")
-        description_label.grid(row=3, column=0, sticky="w", padx=10, pady=(5, 0))
+        description_label = Label(item_frame, text=description, font=FONT_SMALL, bg="white", anchor="w", wraplength=POPUP_WIDTH-100, justify="left")
+        description_label.grid(row=3, column=0, sticky="w", padx=5, pady=(2, 0))
 
         # Attendees
         attendees_frame = Frame(item_frame, bg="white")
-        attendees_frame.grid(row=4, column=0, sticky="w", padx=10, pady=(5, 10))
+        attendees_frame.grid(row=4, column=0, sticky="w", padx=5, pady=(2, 5))
 
         for i, attendee in enumerate(attendees):
             try:
                 img = Image.open(attendee)
-                img = img.resize((25, 25), Image.LANCZOS)  # Smaller attendee icons
+                img = img.resize((20, 20), Image.LANCZOS)  
                 photo = ImageTk.PhotoImage(img)
                 label = Label(attendees_frame, image=photo, bg="white")
                 label.image = photo
-                label.pack(side="left", padx=(0, 3))
+                label.pack(side="left", padx=(0, 2))
             except Exception as e:
                 print(f"Error loading attendee image: {e}")
 
-        # Add image (placeholder for now)
+        # Handle image loading (both URL and local file)
         try:
-            img = Image.open(SCHEDULE_PICTURE)
-            img = img.resize((70, 120), Image.LANCZOS)  # Smaller placeholder image
+            if story.startswith('http'):
+                response = requests.get(story)
+                img = Image.open(BytesIO(response.content))
+            else:
+                img = Image.open(story) if story else Image.open(SCHEDULE_PICTURE)
+            
+            img = img.resize((100, 100), Image.LANCZOS)  # Fixed size for consistency
             photo = ImageTk.PhotoImage(img)
             image_label = Label(item_frame, image=photo, bg="white")
             image_label.image = photo
-            image_label.grid(row=0, column=1, rowspan=5, padx=(0, 10), pady=10, sticky="ne")
+            image_label.grid(row=0, column=1, rowspan=5, padx=5, pady=5, sticky="ne")
         except Exception as e:
-            print(f"Error loading placeholder image: {e}")
+            print(f"Error loading image: {e}")
+          
+
+    def format_date_time(self, date_time_str):
+        # Parse the datetime string
+        dt = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
+        # Format it as desired
+        return dt.strftime("%d/%m/%Y %H:%M")
 
 if __name__ == "__main__":
     root = tk.Tk()
