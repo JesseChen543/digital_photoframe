@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import Frame, Label, Canvas, Scrollbar, ttk
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageEnhance
 from constant import *
 from PopupHeader import PopupHeader
 from utils import center_window_parent
@@ -10,9 +10,10 @@ from datetime import datetime
 from io import BytesIO
 
 class ViewSchedulePopup:
-    def __init__(self, root, app):
+    def __init__(self, root, app, user_id):
         self.root = root
         self.app = app
+        self.user_id = user_id
         self.popup_window = None
 
     def show_schedules(self):
@@ -71,7 +72,7 @@ class ViewSchedulePopup:
             self.popup_window = None
 
     def fetch_schedule_items(self):
-        url = "https://deco3801-foundjesse.uqcloud.net/restapi/event.php?user=1"
+        url = f"https://deco3801-foundjesse.uqcloud.net/restapi/event.php?user={self.user_id}"
         try:
             response = requests.get(url)
             data = response.json()
@@ -122,12 +123,31 @@ class ViewSchedulePopup:
 
         # Attendees
         attendees_frame = Frame(item_frame, bg="white")
-        attendees_frame.grid(row=4, column=0, sticky="e", padx=5, pady=(0, 5))  # Reduced top padding
+        attendees_frame.grid(row=4, column=0, sticky="e", padx=5, pady=(0, 5)) 
 
         for i, attendee in enumerate(attendees):
             try:
+                # Load attendee image
                 img = Image.open(attendee)
-                img = img.resize((20, 20), Image.LANCZOS)  
+                img = img.resize((20, 20), Image.LANCZOS)
+
+                #replace this with the logic to check if the attendee is in the user's friends list (from api)
+                if i == 0:
+                    # Darken the image
+                    enhancer = ImageEnhance.Brightness(img)
+                    img = enhancer.enhance(0.5)  # Reduce brightness by 50%
+
+                    # Open TICK_ICON image
+                    tick_img = Image.open(TICK_ICON)
+                    tick_img = tick_img.resize((10, 10), Image.LANCZOS)  # Adjust size as needed
+
+                    # Calculate center coordinates
+                    x = (img.width - tick_img.width) // 2
+                    y = (img.height - tick_img.height) // 2
+
+                    # Paste tick_img onto img at center (with transparency mask)
+                    img.paste(tick_img, (x, y), tick_img)
+
                 photo = ImageTk.PhotoImage(img)
                 label = Label(attendees_frame, image=photo, bg="white")
                 label.image = photo

@@ -19,6 +19,7 @@ class PhotoFrameApp:
         # Initialize list to keep track of child windows
         self.child_windows = []
 
+        self.user_id = 1
         self.event_id = 2  
         # Initialize saved inputs
         self.saved_notes = []
@@ -33,7 +34,7 @@ class PhotoFrameApp:
         # Initialize NotePopup
         self.add_note_popup = AddNotePopup(self.root, self)
         self.view_note_popup = ViewNotePopup(self.root, self)
-        self.view_schedule_popup = ViewSchedulePopup(self.root, self)
+        self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
         
         # Create canvas first
         self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
