@@ -96,34 +96,96 @@ class ViewSchedulePopup:
             print(f"Error fetching schedule data: {e}")
 
     def add_schedule_item(self, title, start_time, end_time, location, description, story, attendees):
-        item_frame = Frame(self.scrollable_frame, bg="white", borderwidth=1, relief="solid")
-        item_frame.pack(fill="x", padx=5, pady=5)  # Adjust outer padding as needed
+        fixed_width = POPUP_WIDTH - 30  
+        item_frame = Frame(
+            self.scrollable_frame,
+            bg="white",
+            width=fixed_width,
+            borderwidth=1,
+            relief="solid"
+        )
+        item_frame.pack(fill="x", padx=10, pady=5)
+        item_frame.pack_propagate(False)  # Prevent the frame from resizing based on its content
 
         # Use grid layout for better control
         item_frame.grid_columnconfigure(0, weight=1)
-        item_frame.grid_columnconfigure(1, minsize=60) 
+        item_frame.grid_columnconfigure(1, minsize=100)  # Width for the image column
+
+        # Adjust label width to fit within the fixed frame width
+        label_wrap_width = fixed_width - 120  # Subtract image and padding widths
 
         # Title
-        Label(item_frame, text=title, font=FONT_MEDIUM, bg="white", anchor="w").grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
+        Label(
+            item_frame,
+            text=title,
+            font=FONT_MEDIUM,
+            bg="white",
+            anchor="w",
+            wraplength=label_wrap_width
+        ).grid(
+            row=0, column=0, sticky="w", padx=5, pady=(5, 0)
+        )
 
         # Start Time
         formatted_start_time = self.format_date_time(start_time)
-        Label(item_frame, text=f"Start: {formatted_start_time}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=1, column=0, sticky="w", padx=5)
+        Label(
+            item_frame,
+            text=f"Start: {formatted_start_time}",
+            font=FONT_SMALL,
+            fg="gray",
+            bg="white",
+            anchor="w",
+            wraplength=label_wrap_width
+        ).grid(
+            row=1, column=0, sticky="w", padx=5
+        )
 
         # End Time
         formatted_end_time = self.format_date_time(end_time)
-        Label(item_frame, text=f"End: {formatted_end_time}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=2, column=0, sticky="w", padx=5)
+        Label(
+            item_frame,
+            text=f"End: {formatted_end_time}",
+            font=FONT_SMALL,
+            fg="gray",
+            bg="white",
+            anchor="w",
+            wraplength=label_wrap_width
+        ).grid(
+            row=2, column=0, sticky="w", padx=5
+        )
 
         # Location
-        Label(item_frame, text=f"Location: {location if location else 'No location'}", font=FONT_SMALL, fg="gray", bg="white", anchor="w").grid(row=3, column=0, sticky="w", padx=5)
+        Label(
+            item_frame,
+            text=f"Location: {location if location else 'No location'}",
+            font=FONT_SMALL,
+            fg="gray",
+            bg="white",
+            anchor="w",
+            wraplength=label_wrap_width
+        ).grid(
+            row=3, column=0, sticky="w", padx=5
+        )
 
         # Description
-        description_label = Label(item_frame, text=description, font=FONT_SMALL, bg="white", anchor="w", wraplength=POPUP_WIDTH-100, justify="left")
-        description_label.grid(row=4, column=0, sticky="e", padx=5, pady=(2, 0))
+        description_label = Label(
+            item_frame,
+            text=description,
+            font=FONT_SMALL,
+            bg="white",
+            anchor="w",
+            wraplength=label_wrap_width,
+            justify="left"
+        )
+        description_label.grid(
+            row=4, column=0, sticky="w", padx=5, pady=(2, 0)
+        )
 
         # Attendees
         attendees_frame = Frame(item_frame, bg="white")
-        attendees_frame.grid(row=4, column=0, sticky="e", padx=5, pady=(0, 5)) 
+        attendees_frame.grid(
+            row=5, column=0, sticky="w", padx=5, pady=(0, 5)
+        )
 
         for i, attendee in enumerate(attendees):
             try:
@@ -131,15 +193,14 @@ class ViewSchedulePopup:
                 img = Image.open(attendee)
                 img = img.resize((20, 20), Image.LANCZOS)
 
-                #replace this with the logic to check if the attendee is in the user's friends list (from api)
                 if i == 0:
                     # Darken the image
                     enhancer = ImageEnhance.Brightness(img)
-                    img = enhancer.enhance(0.5)  # Reduce brightness by 50%
+                    img = enhancer.enhance(0.5)
 
                     # Open TICK_ICON image
                     tick_img = Image.open(TICK_ICON)
-                    tick_img = tick_img.resize((10, 10), Image.LANCZOS)  # Adjust size as needed
+                    tick_img = tick_img.resize((10, 10), Image.LANCZOS)
 
                     # Calculate center coordinates
                     x = (img.width - tick_img.width) // 2
@@ -151,7 +212,7 @@ class ViewSchedulePopup:
                 photo = ImageTk.PhotoImage(img)
                 label = Label(attendees_frame, image=photo, bg="white")
                 label.image = photo
-                label.pack(side="left", padx=(0, 1), pady=0)  # No vertical padding
+                label.pack(side="left", padx=(0, 1), pady=0)
             except Exception as e:
                 print(f"Error loading attendee image: {e}")
 
@@ -162,15 +223,22 @@ class ViewSchedulePopup:
                 img = Image.open(BytesIO(response.content))
             else:
                 img = Image.open(story) if story else Image.open(SCHEDULE_PICTURE)
-            
+
+            # Ensure the image fits within the fixed item_frame width
             img = img.resize((100, 120), Image.LANCZOS)  
             photo = ImageTk.PhotoImage(img)
             image_label = Label(item_frame, image=photo, bg="white")
             image_label.image = photo
-            image_label.grid(row=0, column=1, rowspan=6, padx=5, pady=5, sticky="ne")
+            image_label.grid(
+                row=0,
+                column=1,
+                rowspan=6,
+                padx=5,
+                pady=5,
+                sticky="ne"
+            )
         except Exception as e:
             print(f"Error loading image: {e}")
-          
 
     def format_date_time(self, date_time_str):
         # Parse the datetime string
@@ -185,6 +253,6 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()  # Hide the main root window if you only want the popup to show
     app = type('', (), {})()
-    schedule_popup = ViewSchedulePopup(root, app)
+    schedule_popup = ViewSchedulePopup(root, app, 2)
     schedule_popup.show_schedules()
     root.mainloop()
