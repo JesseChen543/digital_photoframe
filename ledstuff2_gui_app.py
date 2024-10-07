@@ -59,7 +59,7 @@ def lightBlue():
 
 # Function to get the user's status from the REST API
 def get_user_status():
-    url = 'http://<your-api-endpoint>'  # Replace with your API endpoint
+    url = 'https://deco3801-foundjesse.uqcloud.net/restapi/api.php?user_id=1'  # Replace with your API endpoint
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -72,14 +72,12 @@ def get_user_status():
 
 # Map statuses to LED colors
 def set_led_color_by_status(status):
-    if status == "chilling":
-        blue()  # Blue for 'chilling'
-    elif status == "not available":
-        red()   # Red for 'not available'
-    elif status == "busy":
-        yellow()  # Yellow for 'busy'
-    elif status == "available":
-        green()  # Green for 'available'
+    if status == "Chilling":
+        green()  # Green for 'Chilling'
+    elif status == "Occupied":
+        yellow()   # Yellow for 'Occupied'
+    elif status == "Do not disturb":
+        red()  # Red for 'Do not disturb'
     else:
         turnOff()  # Turn off if status is unknown
 
@@ -94,3 +92,8 @@ while True:
         turnOff()
     
     sleep(5)  # Wait for 5 seconds before checking again
+except KeyboardInterrupt:
+    print("Exiting program...")
+finally:
+    turnOff()
+    GPIO.cleanup()  # Reset all GPIO pins
