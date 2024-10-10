@@ -11,5 +11,5 @@ Traceback (most recent call last):
   File "/home/pi/Desktop/photoframestuff/round_button.py", line 38, in set_opacity
     alpha_image = self.adjust_image_opacity(self.btn_image, opacity)
   File "/home/pi/Desktop/photoframestuff/round_button.py", line 46, in adjust_image_opacity
-    image = image.convert("RGBA")
+    pil_image = pil_image.convert("RGBA")  # Ensure it is in RGBA format
 AttributeError: 'PhotoImage' object has no attribute 'convert'
