@@ -93,12 +93,24 @@ class PhotoFrameApp:
 
         # Update the GUI based on the distance
         if distance < 45:  # If object is within 45 cm
-            self.canvas.itemconfig(self.canvas_image, state='normal')  # Make icon opaque
+            self.show_image()  # Show the image
         else:
-            self.canvas.itemconfig(self.canvas_image, state='hidden')  # Make icon transparent
+            self.hide_image()  # Hide the image
 
         # Re-check the sensor reading every 500 milliseconds
         self.root.after(500, self.update_sensor_reading)
+
+    def show_image(self):
+        """Display the image on the canvas."""
+        if hasattr(self, 'canvas_image'):
+            self.canvas.itemconfig(self.canvas_image, state='normal')
+        else:
+            print("No image to display.")
+
+    def hide_image(self):
+        """Hide the image on the canvas."""
+        if hasattr(self, 'canvas_image'):
+            self.canvas.itemconfig(self.canvas_image, state='hidden')
 
     def fetch_and_display_image(self):
         api_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={self.event_id}"
