@@ -42,11 +42,13 @@ class CanvasButton:
     def adjust_image_opacity(self, image, opacity):
         """Adjust the opacity of an image."""
         # Convert the image to RGBA format
-        image = image._PhotoImage__photo.zoom(1, 1)  # Get the raw image
-        image = image.convert("RGBA")
+        pil_image = image._PhotoImage__photo.zoom(1, 1)  # Get the raw image
+        pil_image = pil_image.convert("RGBA")  # Ensure it is in RGBA format
+
         new_data = []
-        for item in image.getdata():
+        for item in pil_image.getdata():
             new_data.append((item[0], item[1], item[2], int(item[3] * opacity)))  # Modify alpha channel
-        image.putdata(new_data)
-        return ImageTk.PhotoImage(image)  # Return the new image with adjusted opacity
+        pil_image.putdata(new_data)
+
+        return ImageTk.PhotoImage(pil_image)  # Return the new image with adjusted opacity
 
