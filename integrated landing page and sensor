@@ -53,7 +53,7 @@ class PhotoFrameApp:
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
         # Load the icon image
-        self.icon_image = Image.open('path/to/your/icon.png')  # Replace with your icon path
+        self.icon_image = Image.open('/home/pi/Desktop/digital_photoframe/pictures/photoframe3.png')  # Replace with your icon path
         self.icon_photo = ImageTk.PhotoImage(self.icon_image)
 
         # Add the icon to the canvas (initially set as transparent)
