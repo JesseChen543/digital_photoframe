@@ -123,7 +123,7 @@ class PhotoFrameApp:
                     self.update_icon_opacity(1.0)  # Fully opaque
                 else:
                     self.update_icon_opacity(0.0)  # Fully transparent
-            time.sleep(1)  # Adjust the sleep time as needed
+            time.sleep(0.3)  # Adjust the sleep time as needed
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""
