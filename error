@@ -8,4 +8,8 @@ Traceback (most recent call last):
     self.update_icon_opacity(1.0)  # Fully opaque
   File "/home/pi/Desktop/photoframestuff/test.py", line 134, in update_icon_opacity
     self.add_note_button.set_opacity(opacity)  # Placeholder function
-AttributeError: 'CanvasButton' object has no attribute 'set_opacity'
+  File "/home/pi/Desktop/photoframestuff/round_button.py", line 38, in set_opacity
+    alpha_image = self.adjust_image_opacity(self.btn_image, opacity)
+  File "/home/pi/Desktop/photoframestuff/round_button.py", line 46, in adjust_image_opacity
+    image = image.convert("RGBA")
+AttributeError: 'PhotoImage' object has no attribute 'convert'
