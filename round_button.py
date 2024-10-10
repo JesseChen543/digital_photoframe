@@ -34,16 +34,21 @@ class CanvasButton:
         self.canvas.itemconfigure(self.canvas_btn_img_obj, state=state)
 
     def set_opacity(self, opacity):
-        """Set the opacity of the button image."""
+        """ Set the opacity of the button image. """
         alpha_image = self.adjust_image_opacity(self.btn_image, opacity)
         self.canvas.itemconfig(self.canvas_btn_img_obj, image=alpha_image)
         self.btn_image = alpha_image  # Update the reference to the new image
 
     def adjust_image_opacity(self, image, opacity):
-        """Adjust the opacity of an image."""
-        # Convert the image to RGBA format
-        pil_image = image._PhotoImage__photo.zoom(1, 1)  # Get the raw image
-        pil_image = pil_image.convert("RGBA")  # Ensure it is in RGBA format
+        """ Adjust the opacity of an image. """
+        # Get the raw image from the PhotoImage
+        raw_image = image._PhotoImage__photo.zoom(1, 1)  # Get the raw image (PIL format)
+
+        # Convert the raw image to RGBA format
+        pil_image = Image.frombytes('RGBA', raw_image.size, raw_image.tobytes())
+
+        # Ensure it is in RGBA format
+        pil_image = pil_image.convert("RGBA") 
 
         new_data = []
         for item in pil_image.getdata():
@@ -51,4 +56,6 @@ class CanvasButton:
         pil_image.putdata(new_data)
 
         return ImageTk.PhotoImage(pil_image)  # Return the new image with adjusted opacity
+
+
 
