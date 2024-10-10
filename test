@@ -126,6 +126,7 @@ class PhotoFrameApp:
             image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
             bg_image = ImageTk.PhotoImage(image)
 
+            # Create the image on the canvas and store the reference
             self.canvas_image = self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
             self.canvas.bg_image = bg_image
 
