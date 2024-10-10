@@ -1,20 +1,44 @@
+import RPi.GPIO as GPIO
+import time
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk
-from datetime import datetime
-from AddNotePopup import AddNotePopup 
+from datetime import datetime, timedelta
+from AddNotePopup import AddNotePopup
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
 import requests  
 from io import BytesIO  
-from datetime import datetime, timedelta
-import RPi.GPIO as GPIO  # Import the GPIO library
-import time  # Import time for delays
-from constant import *
+import threading
+from constant import * 
+
+# GPIO Mode (BOARD / BCM)
+GPIO.setmode(GPIO.BCM)
+
+# Set GPIO pins
+TRIG = 17  # GPIO pin 17 for TRIG
+ECHO = 27  # GPIO pin 27 for ECHO
+
+# Set the TRIG and ECHO pins as output and input
+GPIO.setup(TRIG, GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
 
 class PhotoFrameApp:
+    """
+    A class representing the main photo frame application.
+    
+    This class manages the display of images, user information, and interactive buttons
+    for adding notes, viewing schedules, and displaying saved notes.
+    """
+
     def __init__(self, root):
+        """
+        Initialize the PhotoFrameApp.
+
+        Args:
+            root (tk.Tk): The root window of the application.
+        """
         self.root = root
         self.root.title("Image Display with Clickable Icon")
 
@@ -27,6 +51,7 @@ class PhotoFrameApp:
         # Get user_id and other user info from database based on frame_id
         self.user_id = self.get_user_id(self.frame_id)
         if self.user_id is None:
+            # Handle the case where user_id couldn't be fetched
             self.display_error("Failed to fetch user information")
             return
 
@@ -52,12 +77,6 @@ class PhotoFrameApp:
         # Fetch and display the image
         self.fetch_and_display_image()
 
-        # Setup ultrasonic sensor
-        self.setup_ultrasonic_sensor()
-
-        # Start distance monitoring
-        self.monitor_distance()
-
         # Center the window on the screen
         center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         
@@ -67,14 +86,58 @@ class PhotoFrameApp:
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
-    def setup_ultrasonic_sensor(self):
-        """Set up the ultrasonic sensor on GPIO pins."""
-        self.TRIG = 17  # Define the trigger pin
-        self.ECHO = 27  # Define the echo pin
-        
-        GPIO.setmode(GPIO.BCM)  # Use BCM pin numbering
-        GPIO.setup(self.TRIG, GPIO.OUT)  # Set the trigger pin as output
-        GPIO.setup(self.ECHO, GPIO.IN)    # Set the echo pin as input
+        # Start the distance measuring thread
+        self.distance_thread = threading.Thread(target=self.distance_monitor)
+        self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
+        self.distance_thread.start()
+
+    def measure_distance(self):
+        """Measure the distance using the ultrasonic sensor."""
+        GPIO.output(TRIG, False)
+        time.sleep(2)
+
+        GPIO.output(TRIG, True)
+        time.sleep(0.00001)
+        GPIO.output(TRIG, False)
+
+        pulse_start = time.time()
+        while GPIO.input(ECHO) == 0:
+            pulse_start = time.time()
+
+        pulse_end = time.time()
+        while GPIO.input(ECHO) == 1:
+            pulse_end = time.time()
+
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 17150
+        return round(distance, 2)
+
+    def distance_monitor(self):
+        """Continuously monitor the distance and update icon opacity."""
+        while True:
+            distance = self.measure_distance()
+            if distance is not None:
+                print(f"Distance: {distance} cm")
+                # Update icon opacity based on distance
+                if distance <= 45:
+                    self.update_icon_opacity(1.0)  # Fully opaque
+                else:
+                    self.update_icon_opacity(0.0)  # Fully transparent
+            time.sleep(1)  # Adjust the sleep time as needed
+
+    def update_icon_opacity(self, opacity):
+        """Update the opacity of the icons on the canvas."""
+        # You can adjust the opacity by changing the alpha channel of the images.
+        # Note: Actual implementation will depend on how you have defined and handled the icons.
+        # Here, we'll assume you can change their opacity based on some logic.
+        if self.add_note_button:
+            self.add_note_button.set_opacity(opacity)  # Placeholder function
+        if self.view_schedule_button:
+            self.view_schedule_button.set_opacity(opacity)  # Placeholder function
+        if self.view_note_button:
+            self.view_note_button.set_opacity(opacity)  # Placeholder function
+
+    
 
     def get_user_id(self, frame_id):
         """
@@ -225,7 +288,7 @@ class PhotoFrameApp:
             self.display_error(f"Error loading image: {str(e)}")
 
     def display_error(self, message):
-          """
+        """
         Display an error message on the canvas.
 
         Args:
@@ -249,60 +312,7 @@ class PhotoFrameApp:
             self.view_note_button = CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
                          LIST_ICON, self.view_note_popup.show_notes)
 
-    def add_note(self):
-        self.add_note_popup.open()
-
-    def view_notes(self):
-        self.view_note_popup.open()
-
-    def view_schedule(self):
-        self.view_schedule_popup.open()
-
-    def quit_app(self, event=None):
-        # Close all child windows
-        for child in self.child_windows:
-            if child.winfo_exists():
-                child.destroy()
-        # Close the main window
-        GPIO.cleanup()  # Clean up GPIO pins
-        self.root.quit()
-
-    def monitor_distance(self):
-        """Continuously monitor the distance using the ultrasonic sensor."""
-        def measure_distance():
-            while True:
-                GPIO.output(self.TRIG, True)  # Send a 10us pulse to the trigger pin
-                time.sleep(0.00001)  # Wait for 10 microseconds
-                GPIO.output(self.TRIG, False)  # Stop sending the pulse
-
-                start_time = time.time()
-                stop_time = time.time()
-
-                while GPIO.input(self.ECHO) == 0:  # Wait for the echo to start
-                    start_time = time.time()
-
-                while GPIO.input(self.ECHO) == 1:  # Wait for the echo to end
-                    stop_time = time.time()
-
-                # Calculate the distance in cm
-                elapsed_time = stop_time - start_time
-                distance = (elapsed_time * 34300) / 2  # Speed of sound = 34300 cm/s
-
-                # Update icon visibility based on distance
-                if distance < 45:
-                    self.set_icon_opacity(1)  # Fully opaque
-                else:
-                    self.set_icon_opacity(0)  # Fully transparent
-
-                time.sleep(1)  # Measure every second
-
-        # Start the distance measurement in a new thread
-        import threading
-        thread = threading.Thread(target=measure_distance)
-        thread.daemon = True  # Daemonize thread
-        thread.start()
-
-     def update_view_note_button(self):
+    def update_view_note_button(self):
         """Creates the list button if it doesn't exist and there are saved notes."""
         if self.saved_notes and not self.view_note_button:
             print("Creating the list button")
@@ -314,22 +324,23 @@ class PhotoFrameApp:
                 self.view_note_popup.show_notes
             )
 
-    def set_icon_opacity(self, opacity):
-        """Set the icon's opacity based on distance."""
-        state = 'normal' if opacity == 1 else 'hidden'
-        # Update each button's icon based on the opacity
-        if self.add_note_button:
-            self.canvas.itemconfig(self.add_note_button.button_id, state=state)
-        if self.view_schedule_button:
-            self.canvas.itemconfig(self.view_schedule_button.button_id, state=state)
-        if self.view_note_button:
-            self.canvas.itemconfig(self.view_note_button.button_id, state=state)
-         
+    def quit_app(self, event=None):
+        """Quit the application and clean up GPIO."""
+        GPIO.cleanup()  # Cleanup GPIO on exit
+        # Close all child windows
+        for child in self.child_windows:
+            if child.winfo_exists():
+                child.destroy()
+        # Close the main window
+        self.root.quit()
+
     def register_child_window(self, window):
+        """Register a child window."""
         self.child_windows.append(window)
 
     def unregister_child_window(self, window):
-        self.child_windows.remove(window)
+        """Unregister a child window."""
+        self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
 if __name__ == "__main__":
     root = tk.Tk()
