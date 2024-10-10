@@ -49,6 +49,9 @@ class PhotoFrameApp:
         # Set up GPIO for the ultrasonic sensor
         self.setup_gpio()
 
+        # Initialize canvas_image to None
+        self.canvas_image = None
+
         # Fetch and display the image
         self.fetch_and_display_image()
 
@@ -101,16 +104,19 @@ class PhotoFrameApp:
         self.root.after(500, self.update_sensor_reading)
 
     def show_image(self):
-        """Display the image on the canvas."""
-        if hasattr(self, 'canvas_image'):
-            self.canvas.itemconfig(self.canvas_image, state='normal')
+        """Display the image on the canvas if it exists."""
+        if self.canvas_image is not None:  # Check if the image exists
+            self.canvas.itemconfig(self.canvas_image, state='normal')  # Bring the image to the front
         else:
             print("No image to display.")
 
     def hide_image(self):
         """Hide the image on the canvas."""
-        if hasattr(self, 'canvas_image'):
-            self.canvas.itemconfig(self.canvas_image, state='hidden')
+        if self.canvas_image is not None:  # Only attempt to hide if the image exists
+            self.canvas.itemconfig(self.canvas_image, state='hidden')  # Hide the image
+            # Or delete it entirely if you prefer
+            # self.canvas.delete(self.canvas_image)
+            # self.canvas_image = None
 
     def fetch_and_display_image(self):
         api_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={self.event_id}"
