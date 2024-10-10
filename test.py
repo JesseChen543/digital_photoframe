@@ -2,20 +2,16 @@ import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk
 from datetime import datetime
-from AddNotePopup import AddNotePopup
+from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
-import requests
-from io import BytesIO
-import RPi.GPIO as GPIO  # Import RPi.GPIO for the ultrasonic sensor
-import time  # Import time for sensor timing
-
+import requests  
+from io import BytesIO  
+from datetime import datetime, timedelta
+import RPi.GPIO as GPIO  # Import the GPIO library
+import time  # Import time for delays
 from constant import *
-
-# Set GPIO pins for the ultrasonic sensor
-TRIG = 17
-ECHO = 27
 
 class PhotoFrameApp:
     def __init__(self, root):
@@ -25,154 +21,165 @@ class PhotoFrameApp:
         # Initialize list to keep track of child windows
         self.child_windows = []
 
-        self.user_id = 1
-        self.event_id = 2
+        # Initialize frame_id (assuming it's always 1 for now)
+        self.frame_id = 1
+
+        # Get user_id and other user info from database based on frame_id
+        self.user_id = self.get_user_id(self.frame_id)
+        if self.user_id is None:
+            self.display_error("Failed to fetch user information")
+            return
+
         # Initialize saved inputs
         self.saved_notes = []
 
-        # Initialize buttons
-        self.view_note_button = None
+        # Initialize buttons 
+        self.view_note_button = None  
         self.view_schedule_button = None
         self.add_note_button = None
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
-        # Initialize NotePopup
+        # Initialize popup windows
         self.add_note_popup = AddNotePopup(self.root, self)
         self.view_note_popup = ViewNotePopup(self.root, self)
         self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
-
-        # Create canvas first
+        
+        # Create canvas
         self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
-
-        # Set up GPIO for the ultrasonic sensor
-        self.setup_gpio()
-
-        # Initialize canvas_image to None
-        self.canvas_image = None
 
         # Fetch and display the image
         self.fetch_and_display_image()
 
+        # Setup ultrasonic sensor
+        self.setup_ultrasonic_sensor()
+
+        # Start distance monitoring
+        self.monitor_distance()
+
+        # Center the window on the screen
         center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
+        
+        # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
 
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
-        # Start checking the sensor in a loop
-        self.update_sensor_reading()
+    def setup_ultrasonic_sensor(self):
+        """Set up the ultrasonic sensor on GPIO pins."""
+        self.TRIG = 17  # Define the trigger pin
+        self.ECHO = 27  # Define the echo pin
+        
+        GPIO.setmode(GPIO.BCM)  # Use BCM pin numbering
+        GPIO.setup(self.TRIG, GPIO.OUT)  # Set the trigger pin as output
+        GPIO.setup(self.ECHO, GPIO.IN)    # Set the echo pin as input
 
-    def setup_gpio(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(TRIG, GPIO.OUT)
-        GPIO.setup(ECHO, GPIO.IN)
-        GPIO.output(TRIG, False)
-        print("Waiting for sensor to settle")
-        time.sleep(2)
-
-    def read_distance(self):
-        # Trigger the ultrasonic pulse
-        GPIO.output(TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(TRIG, False)
-
-        # Measure the time taken for the echo
-        while GPIO.input(ECHO) == 0:
-            pulse_start = time.time()
-
-        while GPIO.input(ECHO) == 1:
-            pulse_end = time.time()
-
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150  # Calculate distance in cm
-        distance = round(distance, 2)
-        return distance
-
-    def update_sensor_reading(self):
-        distance = self.read_distance()
-        print(f"Distance: {distance} cm")
-
-        # Update the GUI based on the distance
-        if distance < 45:  # If object is within 45 cm
-            self.show_image()  # Show the image
-        else:
-            self.hide_image()  # Hide the image
-
-        # Re-check the sensor reading every 500 milliseconds
-        self.root.after(500, self.update_sensor_reading)
-
-    def show_image(self):
-        """Display the image on the canvas if it exists."""
-        if self.canvas_image is not None:  # Check if the image exists
-            self.canvas.itemconfig(self.canvas_image, state='normal')  # Bring the image to the front
-        else:
-            print("No image to display.")
-
-    def hide_image(self):
-        """Hide the image on the canvas."""
-        if self.canvas_image is not None:  # Only attempt to hide if the image exists
-            self.canvas.itemconfig(self.canvas_image, state='hidden')  # Hide the image
-            # Or delete it entirely if you prefer
-            # self.canvas.delete(self.canvas_image)
-            # self.canvas_image = None
+    def get_user_id(self, frame_id):
+        # Fetch user ID from database based on frame_id
+        # Placeholder for database access logic
+        return 1  # Example user ID, replace with actual logic
 
     def fetch_and_display_image(self):
-        api_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={self.event_id}"
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status()
-            data = response.json()
-
-            if data and isinstance(data, list) and len(data) > 0:
-                image_url = data[0]['url']
-                self.load_and_display_image(image_url)
-            else:
-                self.display_error("No images found for this user")
-        except requests.RequestException as e:
-            self.display_error(f"Failed to fetch image URL: {str(e)}")
-        except ValueError as e:
-            self.display_error(f"Invalid JSON response: {str(e)}")
+        # Example URL to fetch an image
+        image_url = "http://example.com/image.jpg"  # Replace with your image URL
+        self.load_and_display_image(image_url)
 
     def load_and_display_image(self, image_url):
         try:
             response = requests.get(image_url)
-            response.raise_for_status()
-            image_data = BytesIO(response.content)
-            image = Image.open(image_data)
-            image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
-            bg_image = ImageTk.PhotoImage(image)
+            image_data = Image.open(BytesIO(response.content))
 
-            # Create the image on the canvas and store the reference
-            self.canvas_image = self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
-            self.canvas.bg_image = bg_image
+            # Resize image to fit the canvas
+            image_data = image_data.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.ANTIALIAS)
+            self.image = ImageTk.PhotoImage(image_data)
 
-            # Add buttons after the image is loaded
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.image)
             self.add_buttons()
         except Exception as e:
-            self.display_error(f"Error loading image: {str(e)}")
+            self.display_error(f"Failed to load image: {e}")
 
     def display_error(self, message):
-        print(message)
-        error_label = tk.Label(self.root, text=message, bg="white")
-        error_label.place(x=0, y=0, relwidth=1, relheight=1)
+        error_label = tk.Label(self.root, text=message, fg="red")
+        error_label.pack()
 
     def add_buttons(self):
-        self.add_note_button = CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                                            WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
-        self.view_schedule_button = CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                                                 UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
-        if self.saved_notes:
-            self.view_note_button = CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                                                 LIST_ICON, self.view_note_popup.show_notes)
+        # Add buttons to the canvas (implement your button logic here)
+        # Example:
+        self.add_note_button = CanvasButton(self.canvas, text="Add Note", command=self.add_note, x=100, y=100)
+        self.view_note_button = CanvasButton(self.canvas, text="View Notes", command=self.view_notes, x=100, y=150)
+        self.view_schedule_button = CanvasButton(self.canvas, text="View Schedule", command=self.view_schedule, x=100, y=200)
+
+    def add_note(self):
+        self.add_note_popup.open()
+
+    def view_notes(self):
+        self.view_note_popup.open()
+
+    def view_schedule(self):
+        self.view_schedule_popup.open()
 
     def quit_app(self, event=None):
-        GPIO.cleanup()  # Clean up GPIO pins before exiting
+        # Close all child windows
         for child in self.child_windows:
             if child.winfo_exists():
                 child.destroy()
+        # Close the main window
+        GPIO.cleanup()  # Clean up GPIO pins
         self.root.quit()
+
+    def monitor_distance(self):
+        """Continuously monitor the distance using the ultrasonic sensor."""
+        def measure_distance():
+            while True:
+                GPIO.output(self.TRIG, True)  # Send a 10us pulse to the trigger pin
+                time.sleep(0.00001)  # Wait for 10 microseconds
+                GPIO.output(self.TRIG, False)  # Stop sending the pulse
+
+                start_time = time.time()
+                stop_time = time.time()
+
+                while GPIO.input(self.ECHO) == 0:  # Wait for the echo to start
+                    start_time = time.time()
+
+                while GPIO.input(self.ECHO) == 1:  # Wait for the echo to end
+                    stop_time = time.time()
+
+                # Calculate the distance in cm
+                elapsed_time = stop_time - start_time
+                distance = (elapsed_time * 34300) / 2  # Speed of sound = 34300 cm/s
+
+                # Update icon visibility based on distance
+                if distance < 45:
+                    self.set_icon_opacity(1)  # Fully opaque
+                else:
+                    self.set_icon_opacity(0)  # Fully transparent
+
+                time.sleep(1)  # Measure every second
+
+        # Start the distance measurement in a new thread
+        import threading
+        thread = threading.Thread(target=measure_distance)
+        thread.daemon = True  # Daemonize thread
+        thread.start()
+
+    def set_icon_opacity(self, opacity):
+        """Set the icon's opacity based on distance."""
+        state = 'normal' if opacity == 1 else 'hidden'
+        # Update each button's icon based on the opacity
+        if self.add_note_button:
+            self.canvas.itemconfig(self.add_note_button.button_id, state=state)
+        if self.view_schedule_button:
+            self.canvas.itemconfig(self.view_schedule_button.button_id, state=state)
+        if self.view_note_button:
+            self.canvas.itemconfig(self.view_note_button.button_id, state=state)
+
+    def register_child_window(self, window):
+        self.child_windows.append(window)
+
+    def unregister_child_window(self, window):
+        self.child_windows.remove(window)
 
 if __name__ == "__main__":
     root = tk.Tk()
