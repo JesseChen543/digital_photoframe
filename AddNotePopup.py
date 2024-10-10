@@ -1,15 +1,29 @@
-# NotePopup.py
+# AddNotePopup.py
 import tkinter as tk
 from tkinter import ttk, Frame
 from PIL import Image, ImageTk
 from constant import *
-from tkinter import messagebox
 from datetime import datetime
 from PopupHeader import PopupHeader
 from utils import center_window_parent
 
 class AddNotePopup:
+    """
+    A class to create and manage a popup window for adding notes.
+
+    This class handles the creation of a popup window where users can input
+    a note name, end date/time, and note content. It also manages the date
+    selection process and validation of user inputs.
+    """
+
     def __init__(self, root, app):
+        """
+        Initialize the AddNotePopup instance.
+
+        Args:
+            root (tk.Tk): The root window of the application.
+            app: The main application instance.
+        """
         self.root = root
         self.app = app  
         self.popup_window = None
@@ -21,8 +35,15 @@ class AddNotePopup:
         self.selected_time = None
         self.End_time_combobox = None 
         self.choose_date_button = None
+        self.name_error_label = None
 
     def add_note(self):
+        """
+        Create and display the main note addition popup window.
+
+        This method sets up the UI for adding a new note, including input fields
+        for the note name, end date/time, and note content.
+        """
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = tk.Toplevel(self.root)
             self.popup_window.configure(bg=POPUP_BG_COLOR)
@@ -48,9 +69,18 @@ class AddNotePopup:
             list_name_frame = Frame(inner_frame, bg=POPUP_BG_COLOR)
             list_name_frame.pack(fill="x", pady=5)
 
+            # Label and error message container
+            name_label_frame = Frame(list_name_frame, bg=POPUP_BG_COLOR)
+            name_label_frame.pack(fill="x")
+
             # Label 
-            list_name_label = tk.Label(list_name_frame, text="Name:", bg=POPUP_BG_COLOR, font=FONT_SMALL)
-            list_name_label.pack(anchor="w", padx=5)
+            list_name_label = tk.Label(name_label_frame, text="Name:", bg=POPUP_BG_COLOR, font=FONT_SMALL)
+            list_name_label.pack(side="left", padx=5)
+
+            # Error message (initially hidden)
+            self.name_error_label = tk.Label(name_label_frame, text="Name can't be empty", bg=POPUP_BG_COLOR, fg="red", font=FONT_SMALL)
+            self.name_error_label.pack(side="left", padx=5)
+            self.name_error_label.pack_forget()  # Hide it initially
 
             # Entry 
             self.list_name_entry = tk.Entry(
@@ -63,6 +93,9 @@ class AddNotePopup:
                 borderwidth=0
             )
             self.list_name_entry.pack(fill="x", padx=5, pady=5)
+
+            # Bind the entry to a validation function
+            self.list_name_entry.bind("<FocusOut>", self.validate_name)
 
             # End Date
             end_frame = Frame(inner_frame, bg=POPUP_BG_COLOR)
@@ -136,6 +169,12 @@ class AddNotePopup:
             # Register this window with the main app
             self.app.register_child_window(self.popup_window)
 
+    def validate_name(self, event=None):
+        if not self.list_name_entry.get().strip():
+            self.name_error_label.pack(side="left", padx=5)
+        else:
+            self.name_error_label.pack_forget()
+
     def submit_note(self):
         name = self.list_name_entry.get().strip()
         if name:
@@ -150,14 +189,14 @@ class AddNotePopup:
             })
             
             print(f"Submitted note - Name: {name}, End Date: {end_date}, Note: {note}")
-            messagebox.showinfo("Success", "Note uploaded successfully!")
             
             # Update the list button after submitting the note
             self.app.update_view_note_button()
             
             self.close_popup()
         else:
-            messagebox.showerror("Error", "Please enter a name for the note.")
+            self.validate_name()  # Show the error message
+            print("Error: Please enter a name for the note.")
 
     # Method to close the popup
     def close_popup(self):
@@ -348,12 +387,12 @@ class AddNotePopup:
             if selected_day_adjusted == current_day:
                 # If it's today, ensure the selected time is later than the current time
                 if selected_datetime <= current_time:
-                    messagebox.showwarning("Time Error", "Please select a time later than the current time.")
+                    print("Time Error: Please select a time later than the current time.")
                     self.pick_date_popup.focus_force()
                     return
             elif selected_day_adjusted < current_day:
                 # If the selected day is earlier in the week, assume it's for next week
-                messagebox.showinfo("Date Info", "The selected day is in the next week.")
+                print("Date Info: The selected day is in the next week.")
                 self.pick_date_popup.focus_force()
 
             # Update the Choose Date button text
@@ -367,7 +406,7 @@ class AddNotePopup:
             self.close_pick_date_popup()  # Close the pick date popup
             self.popup_window.focus_force()  # Ensure focus returns to the main AddNotePopup window
         else:
-            messagebox.showwarning("Selection Error", "Please select both a day and a time.")
+            print("Selection Error: Please select both a day and a time.")
             self.pick_date_popup.focus_force()
 
     def close_pick_date_popup(self):
