@@ -10,6 +10,6 @@ Traceback (most recent call last):
     self.add_note_button.set_opacity(opacity)  # Placeholder function
   File "/home/pi/Desktop/photoframestuff/round_button.py", line 38, in set_opacity
     alpha_image = self.adjust_image_opacity(self.btn_image, opacity)
-  File "/home/pi/Desktop/photoframestuff/round_button.py", line 46, in adjust_image_opacity
-    pil_image = pil_image.convert("RGBA")  # Ensure it is in RGBA format
-AttributeError: 'PhotoImage' object has no attribute 'convert'
+  File "/home/pi/Desktop/photoframestuff/round_button.py", line 48, in adjust_image_opacity
+    pil_image = Image.frombytes('RGBA', raw_image.size, raw_image.tobytes())
+AttributeError: 'PhotoImage' object has no attribute 'size'
