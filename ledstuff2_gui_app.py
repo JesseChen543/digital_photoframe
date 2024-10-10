@@ -3,7 +3,6 @@ from time import sleep
 import requests
 
 GPIO.setwarnings(False)
-
 GPIO.setmode(GPIO.BCM)
 
 # Set red, green, and blue pins
@@ -16,46 +15,29 @@ GPIO.setup(redPin, GPIO.OUT)
 GPIO.setup(greenPin, GPIO.OUT)
 GPIO.setup(bluePin, GPIO.OUT)
 
-# Functions to control the LED colors
-def turnOff():
+# Function to turn off the LED
+def turn_off():
     GPIO.output(redPin, GPIO.HIGH)
     GPIO.output(greenPin, GPIO.HIGH)
     GPIO.output(bluePin, GPIO.HIGH)
 
-def white():
-    GPIO.output(redPin, GPIO.LOW)
-    GPIO.output(greenPin, GPIO.LOW)
-    GPIO.output(bluePin, GPIO.LOW)
-
+# Function to turn on red
 def red():
-    GPIO.output(redPin, GPIO.LOW)
-    GPIO.output(greenPin, GPIO.HIGH)
-    GPIO.output(bluePin, GPIO.HIGH)
+    GPIO.output(redPin, GPIO.LOW)    # Red ON
+    GPIO.output(greenPin, GPIO.HIGH)  # Green OFF
+    GPIO.output(bluePin, GPIO.HIGH)   # Blue OFF
 
+# Function to turn on green
 def green():
-    GPIO.output(redPin, GPIO.HIGH)
-    GPIO.output(greenPin, GPIO.LOW)
-    GPIO.output(bluePin, GPIO.HIGH)
+    GPIO.output(redPin, GPIO.HIGH)    # Red OFF
+    GPIO.output(greenPin, GPIO.LOW)   # Green ON
+    GPIO.output(bluePin, GPIO.HIGH)   # Blue OFF
 
-def blue():
-    GPIO.output(redPin, GPIO.HIGH)
-    GPIO.output(greenPin, GPIO.HIGH)
-    GPIO.output(bluePin, GPIO.LOW)
-
+# Function to turn on yellow
 def yellow():
-    GPIO.output(redPin, GPIO.LOW)
-    GPIO.output(greenPin, GPIO.LOW)
-    GPIO.output(bluePin, GPIO.HIGH)
-
-def purple():
-    GPIO.output(redPin, GPIO.LOW)
-    GPIO.output(greenPin, GPIO.HIGH)
-    GPIO.output(bluePin, GPIO.LOW)
-
-def lightBlue():
-    GPIO.output(redPin, GPIO.HIGH)
-    GPIO.output(greenPin, GPIO.LOW)
-    GPIO.output(bluePin, GPIO.LOW)
+    GPIO.output(redPin, GPIO.LOW)     # Red ON
+    GPIO.output(greenPin, GPIO.LOW)   # Green ON
+    GPIO.output(bluePin, GPIO.HIGH)   # Blue OFF
 
 # Function to get the user's status from the REST API
 def get_user_status():
@@ -65,6 +47,7 @@ def get_user_status():
         if response.status_code == 200:
             return response.json().get('status', None)  # Assuming the status is returned in the JSON response
         else:
+            print(f"Error: Received status code {response.status_code}")
             return None
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to API: {e}")
@@ -75,25 +58,27 @@ def set_led_color_by_status(status):
     if status == "Chilling":
         green()  # Green for 'Chilling'
     elif status == "Occupied":
-        yellow()   # Yellow for 'Occupied'
+        yellow()  # Yellow for 'Occupied'
     elif status == "Do not disturb":
         red()  # Red for 'Do not disturb'
     else:
-        turnOff()  # Turn off if status is unknown
+        print(f"Unknown status: {status}. Turning off LEDs.")
+        turn_off()  # Turn off if status is unknown
 
 # Main loop to check the status and control LEDs
-while True:
-    user_status = get_user_status()
-    if user_status:
-        print(f"User status: {user_status}")
-        set_led_color_by_status(user_status)
-    else:
-        print("Failed to retrieve user status. Turning off LEDs.")
-        turnOff()
-    
-    sleep(5)  # Wait for 5 seconds before checking again
+try:
+    while True:
+        user_status = get_user_status()
+        if user_status:
+            print(f"User status: {user_status}")
+            set_led_color_by_status(user_status)
+        else:
+            print("Failed to retrieve user status. Turning off LEDs.")
+            turn_off()
+        
+        sleep(5)  # Wait for 5 seconds before checking again
 except KeyboardInterrupt:
     print("Exiting program...")
 finally:
-    turnOff()
+    turn_off()
     GPIO.cleanup()  # Reset all GPIO pins
