@@ -24,10 +24,12 @@ class QRCodePage:
         """
         self.root = root
         self.callback = callback
-        self.root.title("Pairing via QR Code")
-
+        
+        # Remove window decorations
+        self.root.overrideredirect(True)
+        
         # Set full screen size and background color
-        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
         self.root.configure(bg=QR_BG_COLOR)
 
         # Create the layout
@@ -35,6 +37,9 @@ class QRCodePage:
 
         # Bind click event to the entire window
         self.root.bind("<Button-1>", self._on_click)
+
+        # Bind Escape key to close the application
+        self.root.bind("<Escape>", lambda e: self.root.quit())
 
     def _create_layout(self):
         """Create and set up the layout for the QR code page."""
@@ -104,6 +109,8 @@ class QRCodePage:
         """
         self.root.destroy()  # Close the QR code window
         new_root = tk.Tk()  # Create a new root window
+        new_root.overrideredirect(True)  # Remove window decorations for the new window
+        new_root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size for the new window
         app = PhotoFrameApp(new_root)  # Create the PhotoFrameApp
         if self.callback:
             self.callback()  # Call the callback function if provided
@@ -111,5 +118,7 @@ class QRCodePage:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = QRCodePage(root)
     root.mainloop()

@@ -28,7 +28,12 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
-        self.root.title("Image Display with Clickable Icon")
+        
+        # Remove window decorations
+        self.root.overrideredirect(True)
+        
+        # Set full screen size
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
 
         # Initialize list to keep track of child windows
         self.child_windows = []
@@ -53,9 +58,9 @@ class PhotoFrameApp:
         self.saved_notes = []
 
         # Initialize buttons 
-        self.view_note_button = None  
-        self.view_schedule_button = None
         self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
@@ -70,9 +75,6 @@ class PhotoFrameApp:
 
         # Fetch and display the image
         self.fetch_and_display_image()
-
-        # Center the window on the screen
-        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
@@ -348,5 +350,7 @@ class PhotoFrameApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()

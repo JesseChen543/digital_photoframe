@@ -26,8 +26,11 @@ class SplashScreenApp:
         self.root = root
         self.root.title("InSync")
         
+        # Remove window decorations
+        self.root.overrideredirect(True)
+        
         # Set full screen size and background color
-        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
         self.root.configure(bg=LANDING_BG_COLOR)
 
         # Create the main layout
@@ -35,6 +38,9 @@ class SplashScreenApp:
 
         # Bind click event to the entire window
         self.root.bind("<Button-1>", self.start_action)
+
+        # Bind Escape key to close the application
+        self.root.bind("<Escape>", lambda e: self.root.quit())
 
     def _create_layout(self):
         """Create and set up the layout for the splash screen."""
