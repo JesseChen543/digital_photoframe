@@ -82,6 +82,7 @@ class PhotoFrameApp:
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
+
     def get_user_id(self, frame_id):
         """
         Fetch user information from the database based on frame_id.

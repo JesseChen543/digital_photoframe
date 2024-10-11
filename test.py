@@ -1,28 +1,16 @@
-import RPi.GPIO as GPIO
-import time
 import tkinter as tk
 from round_button import CanvasButton
-from PIL import Image, ImageTk
-from datetime import datetime, timedelta
-from AddNotePopup import AddNotePopup
+from PIL import Image, ImageTk, ImageSequence
+from datetime import datetime
+from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
 import requests  
 from io import BytesIO  
-import threading
-from constant import * 
-
-# GPIO Mode (BOARD / BCM)
-GPIO.setmode(GPIO.BCM)
-
-# Set GPIO pins
-TRIG = 17  # GPIO pin 17 for TRIG
-ECHO = 27  # GPIO pin 27 for ECHO
-
-# Set the TRIG and ECHO pins as output and input
-GPIO.setup(TRIG, GPIO.OUT)
-GPIO.setup(ECHO, GPIO.IN)
+from datetime import datetime, timedelta
+from constant import *
+import time
 
 class PhotoFrameApp:
     """
@@ -40,7 +28,12 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
+        
+        # Remove window decorations
         self.root.overrideredirect(True)
+        
+        # Set full screen size
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
 
         # Initialize list to keep track of child windows
         self.child_windows = []
@@ -55,13 +48,19 @@ class PhotoFrameApp:
             self.display_error("Failed to fetch user information")
             return
 
+        # Initialize story property
+        self.story = None
+        
+        # Fetch user events and set the story
+        self.fetch_user_events()
+
         # Initialize saved inputs
         self.saved_notes = []
 
         # Initialize buttons 
-        self.view_note_button = None  
-        self.view_schedule_button = None
         self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
@@ -76,20 +75,12 @@ class PhotoFrameApp:
 
         # Fetch and display the image
         self.fetch_and_display_image()
-
-        # Center the window on the screen
-        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
 
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
-
-        # Start the distance measuring thread
-        self.distance_thread = threading.Thread(target=self.distance_monitor)
-        self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
-        self.distance_thread.start()
 
     def measure_distance(self):
         """Measure the distance using the ultrasonic sensor."""
@@ -137,7 +128,6 @@ class PhotoFrameApp:
         if self.view_note_button:
             self.view_note_button.set_opacity(opacity)  # Placeholder function
 
-    
 
     def get_user_id(self, frame_id):
         """
@@ -174,12 +164,39 @@ class PhotoFrameApp:
             print(f"Invalid JSON response: {str(e)}")
             return None
 
+    def fetch_user_events(self):
+        """Fetch user events and set the story property."""
+        special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
+        
+        try:
+            response = requests.get(special_user_url)
+            response.raise_for_status()
+            user_events = response.json()
+
+            # Find the first event with a story
+            for event in user_events:
+                if event['story']:
+                    self.story = event['story']
+                    break
+
+            if self.story:
+                print(f"Story set: {self.story}")
+            else:
+                print("No story found in user events")
+
+        except requests.RequestException as e:
+            print(f"Failed to fetch user events: {str(e)}")
+        except ValueError as e:
+            print(f"Invalid JSON response for user events: {str(e)}")
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching user events: {str(e)}")
+
     def fetch_and_display_image(self):
         """
         Fetch and display an image for the photo frame.
         
-        This method attempts to fetch an image from a story if available and the user is close,
-        then from a future event, and finally falls back to a default user image if needed.
+        This method attempts to fetch an image from a future event. If no suitable
+        future event image is found, it falls back to a default user image.
         """
         base_url = "https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event="
         special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
@@ -192,8 +209,8 @@ class PhotoFrameApp:
         print(f"Current time: {current_time}")
 
         try:
-            # Check if there's a story and the user is close enough
-            if self.story and self.measure_distance() <= 45:
+            # Use the story URL if available, otherwise proceed with existing logic
+            if self.story:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
             else:
@@ -272,6 +289,7 @@ class PhotoFrameApp:
     def load_and_display_image(self, image_url):
         """
         Load and display an image from a given URL.
+        Supports both static images and animated GIFs.
 
         Args:
             image_url (str): The URL of the image to be displayed.
@@ -280,17 +298,48 @@ class PhotoFrameApp:
             response = requests.get(image_url)
             response.raise_for_status()
             image_data = BytesIO(response.content)
-            image = Image.open(image_data)  # Open the image
-            image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)  # Resize
-            bg_image = ImageTk.PhotoImage(image)
+            image = Image.open(image_data)
 
-            self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
-            self.canvas.bg_image = bg_image
+            if image.format == 'GIF' and image.is_animated:
+                self.animate_gif(image)
+            else:
+                # Handle static images as before
+                image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
+                bg_image = ImageTk.PhotoImage(image)
+                self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
+                self.canvas.bg_image = bg_image
 
             # Add buttons after the image is loaded
             self.add_buttons()
         except Exception as e:
             self.display_error(f"Error loading image: {str(e)}")
+
+    def animate_gif(self, image):
+        """
+        Animate a GIF image on the canvas.
+
+        Args:
+            image (PIL.Image): The GIF image to animate.
+        """
+        frames = []
+        try:
+            for frame in ImageSequence.Iterator(image):
+                frame = frame.copy()
+                frame = frame.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
+                frames.append(ImageTk.PhotoImage(frame))
+        except Exception as e:
+            print(f"Error processing GIF frames: {str(e)}")
+            return
+
+        def update_frame(frame_num=0):
+            if frame_num < len(frames):
+                self.canvas.delete("all")  # Clear previous frame
+                self.canvas.create_image(0, 0, anchor='nw', image=frames[frame_num])
+                next_frame = (frame_num + 1) % len(frames)
+                self.root.after(100, update_frame, next_frame)  # Adjust delay as needed
+            self.add_buttons()  # Ensure buttons are always on top
+
+        update_frame(0)
 
     def display_error(self, message):
         """
@@ -330,8 +379,7 @@ class PhotoFrameApp:
             )
 
     def quit_app(self, event=None):
-        """Quit the application and clean up GPIO."""
-        GPIO.cleanup()  # Cleanup GPIO on exit
+        """Quit the application and close all child windows."""
         # Close all child windows
         for child in self.child_windows:
             if child.winfo_exists():
@@ -349,5 +397,7 @@ class PhotoFrameApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
