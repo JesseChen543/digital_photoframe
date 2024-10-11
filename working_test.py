@@ -40,9 +40,8 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
-        # Remove the title bar
-        self.root.overrideredirect(True)
-        
+        self.root.title("Image Display with Clickable Icon")
+
         # Initialize list to keep track of child windows
         self.child_windows = []
 

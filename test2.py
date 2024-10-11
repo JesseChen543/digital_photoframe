@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import tkinter as tk
 from round_button import CanvasButton
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime, timedelta
 from AddNotePopup import AddNotePopup
 from ViewNotePopup import ViewNotePopup
@@ -40,9 +40,13 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
+
         # Remove the title bar
         self.root.overrideredirect(True)
-        
+
+        # Set full screen size
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
+
         # Initialize list to keep track of child windows
         self.child_windows = []
 
@@ -56,6 +60,12 @@ class PhotoFrameApp:
             self.display_error("Failed to fetch user information")
             return
 
+        # Initialize story property
+        self.story = None
+        
+        # Fetch user events and set the story
+        self.fetch_user_events()
+
         # Initialize saved inputs
         self.saved_notes = []
 
@@ -63,6 +73,8 @@ class PhotoFrameApp:
         self.view_note_button = None  
         self.view_schedule_button = None
         self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
@@ -78,8 +90,8 @@ class PhotoFrameApp:
         # Fetch and display the image
         self.fetch_and_display_image()
 
-        # Center the window on the screen
-        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
+        # Initialize a flag to track GIF playback state
+        self.gif_playing = False
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
@@ -122,8 +134,13 @@ class PhotoFrameApp:
                 # Update icon opacity based on distance
                 if distance <= 45:
                     self.update_icon_opacity(1.0)  # Fully opaque
+                    if self.story and not self.gif_playing:
+                        print(f"Using story URL: {self.story}")
+                        self.start_gif_playback()  # Start GIF playback
                 else:
                     self.update_icon_opacity(0.0)  # Fully transparent
+                    if self.gif_playing:
+                        self.stop_gif_playback()  # Stop GIF playback
             time.sleep(0.3)  # Adjust the sleep time as needed
 
     def update_icon_opacity(self, opacity):
@@ -137,8 +154,6 @@ class PhotoFrameApp:
             self.view_schedule_button.set_opacity(opacity)  # Placeholder function
         if self.view_note_button:
             self.view_note_button.set_opacity(opacity)  # Placeholder function
-
-    
 
     def get_user_id(self, frame_id):
         """
@@ -175,6 +190,30 @@ class PhotoFrameApp:
             print(f"Invalid JSON response: {str(e)}")
             return None
 
+    def fetch_user_events(self):
+        """Fetch user events and set the story property."""
+        special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
+        
+        try:
+            response = requests.get(special_user_url)
+            response.raise_for_status()
+            user_events = response.json()
+            # Find the first event with a story
+            for event in user_events:
+                if event['story']:
+                    self.story = event['story']
+                    break
+            if self.story:
+                print(f"Story set: {self.story}")
+            else:
+                print("No story found in user events")
+        except requests.RequestException as e:
+            print(f"Failed to fetch user events: {str(e)}")
+        except ValueError as e:
+            print(f"Invalid JSON response for user events: {str(e)}")
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching user events: {str(e)}")
+
     def fetch_and_display_image(self):
         """
         Fetch and display an image for the photo frame.
@@ -193,157 +232,112 @@ class PhotoFrameApp:
         print(f"Current time: {current_time}")
 
         try:
-            # Fetch user's events
-            response = requests.get(special_user_url)
-            response.raise_for_status()
-            user_events = response.json()
-
-            print("All events:")
-            for event in user_events:
-                event_id = event['event_id']
-                start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
-                end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
-                api_url = f"{base_url}{event_id}"
-                try:
-                    response = requests.get(api_url)
-                    response.raise_for_status()
-                    photo_data = response.json()
-
-                    if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
-                        photo_url = photo_data[0]['url']
-                        time_difference = end_time - current_time
-                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
-                        
-                        # Choose the future event with the smallest time difference
-                        if time_difference > timedelta() and time_difference < smallest_time_difference:
-                            smallest_time_difference = time_difference
-                            event_photo = photo_url
-                            chosen_event = event
-                    else:
-                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Photo URL: Not available")
-
-                except requests.RequestException as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Failed to fetch photo - {str(e)}")
-                except ValueError as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Invalid JSON response - {str(e)}")
-                except Exception as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Unexpected error - {str(e)}")
-
-            if event_photo:
-                print("\nChosen photo:")
-                print(f"Event ID: {chosen_event['event_id']}")
-                print(f"Event Name: {chosen_event['event_name']}")
-                print(f"Start Time: {chosen_event['start_time']}")
-                print(f"End Time: {chosen_event['end_time']}")
-                print(f"Time Difference: {smallest_time_difference}")
-                print(f"Photo URL: {event_photo}")
-                self.load_and_display_image(event_photo)
+            # Use the story URL if available, otherwise proceed with existing logic
+            if self.story:
+                print(f"Using story URL: {self.story}")
+                self.load_and_display_image(self.story)
             else:
-                print("\nNo suitable future event photo found. Using fallback URL.")
-                try:
+                # Fetch user's events
+                response = requests.get(special_user_url)
+                response.raise_for_status()
+                user_events = response.json()
+
+                print("All events:")
+                for event in user_events:
+                    event_id = event['event_id']
+                    start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
+                    end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
+                    api_url = f"{base_url}{event_id}"
+                    try:
+                        response = requests.get(api_url)
+                        response.raise_for_status()
+                        photo_data = response.json()
+                        if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
+                            event_photo = photo_data[0]['url']
+                            print(f"Event photo fetched: {event_photo}")
+                    except requests.RequestException as e:
+                        print(f"Error fetching photo for event {event_id}: {str(e)}")
+                    except ValueError as e:
+                        print(f"Invalid JSON response for event {event_id}: {str(e)}")
+
+                    time_difference = start_time - current_time
+                    if time_difference >= timedelta(seconds=0) and time_difference < smallest_time_difference:
+                        smallest_time_difference = time_difference
+                        chosen_event = event
+                        print(f"Chosen event: {chosen_event}")
+
+                # Fallback to user image if no suitable event image is found
+                if event_photo is None:
                     response = requests.get(fallback_url)
                     response.raise_for_status()
-                    fallback_data = response.json()
-                    if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
-                        fallback_photo = fallback_data[0]['url']
-                        print(f"Fallback Photo URL: {fallback_photo}")
-                        self.load_and_display_image(fallback_photo)
-                    else:
-                        print("No fallback photo available")
-                        self.display_error("No photo available")
-                except requests.RequestException as e:
-                    self.display_error(f"Failed to fetch fallback photo: {str(e)}")
-                except ValueError as e:
-                    self.display_error(f"Invalid JSON response for fallback photo: {str(e)}")
-                except Exception as e:
-                    self.display_error(f"An unexpected error occurred while fetching fallback photo: {str(e)}")
+                    user_data = response.json()
+                    event_photo = user_data[0]['url'] if user_data and isinstance(user_data, list) and len(user_data) > 0 else None
+
+                if event_photo:
+                    self.load_and_display_image(event_photo)
+                else:
+                    print("No event photo or user image found.")
 
         except requests.RequestException as e:
-            self.display_error(f"Failed to fetch user events: {str(e)}")
+            print(f"Failed to fetch events: {str(e)}")
         except ValueError as e:
-            self.display_error(f"Invalid JSON response for user events: {str(e)}")
+            print(f"Invalid JSON response for events: {str(e)}")
         except Exception as e:
-            self.display_error(f"An unexpected error occurred while fetching user events: {str(e)}")
+            print(f"An unexpected error occurred: {str(e)}")
 
     def load_and_display_image(self, image_url):
-        """
-        Load and display an image from a given URL.
-
-        Args:
-            image_url (str): The URL of the image to be displayed.
-        """
+        """Load an image from a URL and display it on the canvas."""
         try:
             response = requests.get(image_url)
             response.raise_for_status()
-            image_data = BytesIO(response.content)
-            image = Image.open(image_data)  # Open the image
-            image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)  # Resize
-            bg_image = ImageTk.PhotoImage(image)
+            image_data = Image.open(BytesIO(response.content))
 
-            self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
-            self.canvas.bg_image = bg_image
-
-            # Add buttons after the image is loaded
-            self.add_buttons()
+            if image_data.format == 'GIF':
+                self.display_gif(image_data)
+            else:
+                self.display_image(image_data)
+        except requests.RequestException as e:
+            print(f"Failed to load image from URL: {str(e)}")
+        except IOError as e:
+            print(f"Error loading image: {str(e)}")
         except Exception as e:
-            self.display_error(f"Error loading image: {str(e)}")
+            print(f"An unexpected error occurred while displaying the image: {str(e)}")
 
-    def display_error(self, message):
-        """
-        Display an error message on the canvas.
+    def display_gif(self, gif_image):
+        """Display a GIF image on the canvas."""
+        frames = [ImageTk.PhotoImage(frame.copy()) for frame in ImageSequence.Iterator(gif_image)]
+        self.gif_frames = frames
+        self.current_frame = 0
+        self.gif_playing = True
+        self.play_gif()
 
-        Args:
-            message (str): The error message to be displayed.
-        """
-        print(message)
-        error_label = tk.Label(self.root, text=message, bg="white")
-        error_label.place(x=0, y=0, relwidth=1, relheight=1)
+    def play_gif(self):
+        """Play the GIF image by cycling through its frames."""
+        if self.gif_frames:
+            frame = self.gif_frames[self.current_frame]
+            self.canvas.create_image(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, image=frame)
+            self.current_frame = (self.current_frame + 1) % len(self.gif_frames)
+            self.root.after(100, self.play_gif)
 
-    def add_buttons(self):
-        """Add interactive buttons to the canvas."""
-        # Add add-note icon using CanvasButton
-        self.add_note_button = CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                     WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
+    def stop_gif_playback(self):
+        """Stop the GIF playback."""
+        self.gif_playing = False
+        self.canvas.delete("all")
 
-        self.view_schedule_button = CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                     UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
-
-        # Create the list icon button if self.saved_notes is not empty
-        if self.saved_notes:
-            self.view_note_button = CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                         LIST_ICON, self.view_note_popup.show_notes)
-
-    def update_view_note_button(self):
-        """Creates the list button if it doesn't exist and there are saved notes."""
-        if self.saved_notes and not self.view_note_button:
-            print("Creating the list button")
-            self.view_note_button = CanvasButton(
-                self.canvas,
-                LIST_ICON_X,
-                LIST_ICON_Y,
-                LIST_ICON,
-                self.view_note_popup.show_notes
-            )
+    def display_image(self, image):
+        """Display a static image on the canvas."""
+        self.tk_image = ImageTk.PhotoImage(image)
+        self.canvas.create_image(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, image=self.tk_image)
 
     def quit_app(self, event=None):
-        """Quit the application and clean up GPIO."""
-        GPIO.cleanup()  # Cleanup GPIO on exit
-        # Close all child windows
-        for child in self.child_windows:
-            if child.winfo_exists():
-                child.destroy()
-        # Close the main window
-        self.root.quit()
+        """Quit the application and cleanup GPIO settings."""
+        GPIO.cleanup()
+        self.root.destroy()
 
-    def register_child_window(self, window):
-        """Register a child window."""
-        self.child_windows.append(window)
-
-    def unregister_child_window(self, window):
-        """Unregister a child window."""
-        self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
-
+# Entry point for the application
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
