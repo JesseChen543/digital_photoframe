@@ -44,6 +44,9 @@ class PhotoFrameApp:
         # Remove the title bar
         self.root.overrideredirect(True)
 
+        # Set full screen size
+        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
+
         # Initialize list to keep track of child windows
         self.child_windows = []
 
@@ -70,6 +73,8 @@ class PhotoFrameApp:
         self.view_note_button = None  
         self.view_schedule_button = None
         self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
@@ -87,9 +92,6 @@ class PhotoFrameApp:
 
         # Initialize a flag to track GIF playback state
         self.gif_playing = False
-
-        # Center the window on the screen
-        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
@@ -335,5 +337,7 @@ class PhotoFrameApp:
 # Entry point for the application
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
