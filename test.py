@@ -40,9 +40,8 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
-        # Remove the title bar
         self.root.overrideredirect(True)
-        
+
         # Initialize list to keep track of child windows
         self.child_windows = []
 
@@ -179,8 +178,8 @@ class PhotoFrameApp:
         """
         Fetch and display an image for the photo frame.
         
-        This method attempts to fetch an image from a future event. If no suitable
-        future event image is found, it falls back to a default user image.
+        This method attempts to fetch an image from a story if available and the user is close,
+        then from a future event, and finally falls back to a default user image if needed.
         """
         base_url = "https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event="
         special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
@@ -193,70 +192,75 @@ class PhotoFrameApp:
         print(f"Current time: {current_time}")
 
         try:
-            # Fetch user's events
-            response = requests.get(special_user_url)
-            response.raise_for_status()
-            user_events = response.json()
-
-            print("All events:")
-            for event in user_events:
-                event_id = event['event_id']
-                start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
-                end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
-                api_url = f"{base_url}{event_id}"
-                try:
-                    response = requests.get(api_url)
-                    response.raise_for_status()
-                    photo_data = response.json()
-
-                    if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
-                        photo_url = photo_data[0]['url']
-                        time_difference = end_time - current_time
-                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
-                        
-                        # Choose the future event with the smallest time difference
-                        if time_difference > timedelta() and time_difference < smallest_time_difference:
-                            smallest_time_difference = time_difference
-                            event_photo = photo_url
-                            chosen_event = event
-                    else:
-                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Photo URL: Not available")
-
-                except requests.RequestException as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Failed to fetch photo - {str(e)}")
-                except ValueError as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Invalid JSON response - {str(e)}")
-                except Exception as e:
-                    print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Unexpected error - {str(e)}")
-
-            if event_photo:
-                print("\nChosen photo:")
-                print(f"Event ID: {chosen_event['event_id']}")
-                print(f"Event Name: {chosen_event['event_name']}")
-                print(f"Start Time: {chosen_event['start_time']}")
-                print(f"End Time: {chosen_event['end_time']}")
-                print(f"Time Difference: {smallest_time_difference}")
-                print(f"Photo URL: {event_photo}")
-                self.load_and_display_image(event_photo)
+            # Check if there's a story and the user is close enough
+            if self.story and self.measure_distance() <= 45:
+                print(f"Using story URL: {self.story}")
+                self.load_and_display_image(self.story)
             else:
-                print("\nNo suitable future event photo found. Using fallback URL.")
-                try:
-                    response = requests.get(fallback_url)
-                    response.raise_for_status()
-                    fallback_data = response.json()
-                    if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
-                        fallback_photo = fallback_data[0]['url']
-                        print(f"Fallback Photo URL: {fallback_photo}")
-                        self.load_and_display_image(fallback_photo)
-                    else:
-                        print("No fallback photo available")
-                        self.display_error("No photo available")
-                except requests.RequestException as e:
-                    self.display_error(f"Failed to fetch fallback photo: {str(e)}")
-                except ValueError as e:
-                    self.display_error(f"Invalid JSON response for fallback photo: {str(e)}")
-                except Exception as e:
-                    self.display_error(f"An unexpected error occurred while fetching fallback photo: {str(e)}")
+                # Fetch user's events
+                response = requests.get(special_user_url)
+                response.raise_for_status()
+                user_events = response.json()
+
+                print("All events:")
+                for event in user_events:
+                    event_id = event['event_id']
+                    start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
+                    end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
+                    api_url = f"{base_url}{event_id}"
+                    try:
+                        response = requests.get(api_url)
+                        response.raise_for_status()
+                        photo_data = response.json()
+
+                        if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
+                            photo_url = photo_data[0]['url']
+                            time_difference = end_time - current_time
+                            print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
+                            
+                            # Choose the future event with the smallest time difference
+                            if time_difference > timedelta() and time_difference < smallest_time_difference:
+                                smallest_time_difference = time_difference
+                                event_photo = photo_url
+                                chosen_event = event
+                        else:
+                            print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Photo URL: Not available")
+
+                    except requests.RequestException as e:
+                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Failed to fetch photo - {str(e)}")
+                    except ValueError as e:
+                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Invalid JSON response - {str(e)}")
+                    except Exception as e:
+                        print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Error: Unexpected error - {str(e)}")
+
+                if event_photo:
+                    print("\nChosen photo:")
+                    print(f"Event ID: {chosen_event['event_id']}")
+                    print(f"Event Name: {chosen_event['event_name']}")
+                    print(f"Start Time: {chosen_event['start_time']}")
+                    print(f"End Time: {chosen_event['end_time']}")
+                    print(f"Time Difference: {smallest_time_difference}")
+                    print(f"Photo URL: {event_photo}")
+                    self.load_and_display_image(event_photo)
+                else:
+                    print("\nNo suitable future event photo found. Using fallback URL.")
+                    try:
+                        response = requests.get(fallback_url)
+                        response.raise_for_status()
+                        fallback_data = response.json()
+                        if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
+                            fallback_photo = fallback_data[0]['url']
+                            print(f"Fallback Photo URL: {fallback_photo}")
+                            self.load_and_display_image(fallback_photo)
+                        else:
+                            print("No fallback photo available")
+                            self.display_error("No photo available")
+                    except requests.RequestException as e:
+                        self.display_error(f"Failed to fetch fallback photo: {str(e)}")
+                    except ValueError as e:
+                        self.display_error(f"Invalid JSON response for fallback photo: {str(e)}")
+                    except Exception as e:
+                        self.display_error(f"An unexpected error occurred while fetching fallback photo: {str(e)}")
 
         except requests.RequestException as e:
             self.display_error(f"Failed to fetch user events: {str(e)}")
