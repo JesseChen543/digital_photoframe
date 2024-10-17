@@ -37,7 +37,10 @@ class CanvasButton:
 
     def set_opacity(self, opacity):
         """ Set the opacity of the button image. """
-        alpha_image = self.adjust_image_opacity(self.btn_image, opacity)
+        if not (0 <= opacity <= 1):
+            raise ValueError("Opacity must be between 0.0 and 1.0.")
+        
+        alpha_image = self.adjust_image_opacity(self.original_image, opacity)
         self.canvas.itemconfig(self.canvas_btn_img_obj, image=alpha_image)
         self.btn_image = alpha_image  # Update the reference to the new image
 
