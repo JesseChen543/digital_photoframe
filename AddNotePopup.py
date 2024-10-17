@@ -1,11 +1,10 @@
-# AddNotePopup.py
 import tkinter as tk
 from tkinter import ttk, Frame
 from PIL import Image, ImageTk
-from constant import *
 from datetime import datetime
 from PopupHeader import PopupHeader
 from utils import center_window_parent
+from constant import *
 
 class AddNotePopup:
     """
