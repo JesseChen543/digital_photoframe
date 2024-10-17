@@ -54,9 +54,9 @@ class PhotoFrameApp:
         self.story = None
 
         # GPIO setup for LEDs
-        self.LED_RED = 5    # Example GPIO pin for Red LED
-        self.LED_YELLOW = 6  # Example GPIO pin for Yellow LED
-        self.LED_GREEN = 13  # Example GPIO pin for Green LED
+        self.LED_RED = 5    # GPIO pin for Red LED
+        self.LED_YELLOW = 6  # GPIO pin for Yellow LED
+        self.LED_GREEN = 13  # GPIO pin for Green LED
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.LED_RED, GPIO.OUT)
@@ -153,20 +153,17 @@ class PhotoFrameApp:
                         self.is_gif_playing = False
                         self.stop_gif_at_first_frame()  # Stop GIF and show first frame
 
-            time.sleep(0.3)  # Adjust the sleep time as needed
+            time.sleep(0.3) 
 
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""
-        # You can adjust the opacity by changing the alpha channel of the images.
-        # Note: Actual implementation will depend on how you have defined and handled the icons.
-        # Here, we'll assume you can change their opacity based on some logic.
         if self.add_note_button:
-            self.add_note_button.set_opacity(opacity)  # Placeholder function
+            self.add_note_button.set_opacity(opacity)  
         if self.view_schedule_button:
-            self.view_schedule_button.set_opacity(opacity)  # Placeholder function
+            self.view_schedule_button.set_opacity(opacity)  
         if self.view_note_button:
-            self.view_note_button.set_opacity(opacity)  # Placeholder function
+            self.view_note_button.set_opacity(opacity)
 
 
     def get_user_id(self, frame_id):
@@ -239,7 +236,6 @@ class PhotoFrameApp:
                 self.change_led_based_on_status(user_status)
             else:
                 print("No status found in user events")
-                # Optionally, you could turn off all LEDs or set a default state here
                 self.change_led_based_on_status("")
 
         except requests.RequestException as e:
@@ -408,8 +404,6 @@ class PhotoFrameApp:
         except Exception as e:
                 print(f"Error processing GIF frames: {str(e)}")
                 return
-
-                    
 
         def update_frame(frame_num=0):
             if frame_num < len(frames):
