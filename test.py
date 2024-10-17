@@ -312,14 +312,16 @@ class PhotoFrameApp:
         except Exception as e:
             self.display_error(f"An unexpected error occurred while fetching user events: {str(e)}")
 
-    def load_and_display_image(self, image_url):
+    def load_and_display_image(self, image_file_name):
         """
-        Load and display an image from a given URL.
+        Load and display an image from a given file name.
         Supports both static images and animated GIFs.
 
         Args:
-            image_url (str): The URL of the image to be displayed.
+            image_file_name (str): The file name of the image to be displayed.
         """
+        image_url = BASE_URL + image_file_name  # Construct the full URL
+        
         try:
             response = requests.get(image_url)
             response.raise_for_status()
