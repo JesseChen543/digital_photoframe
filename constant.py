@@ -71,6 +71,7 @@ FONT_LARGE = ("Inter", 16)
 FONT_MEDIUM = ("Inter", 12)
 FONT_MEDIUM_BOLD = ("Inter", 12, "bold")
 FONT_SMALL = ("Inter", 9)
+FONT_SMALL_ERROR = ("Inter", 7)
 FONT_SMALL_BOLD = ("Inter", 9, "bold")
 FONT_PREFILLED = ("Open Sans", 9)
 

@@ -46,6 +46,7 @@ class AddNotePopup:
         self.End_time_combobox = None 
         self.choose_date_button = None
         self.name_error_label = None
+        self.error_label = None
 
     def add_note(self):
         """
@@ -356,17 +357,33 @@ class AddNotePopup:
         combobox_frame.bind("<FocusOut>", lambda e: combobox_frame.config(highlightbackground="gray75", highlightthickness=1))
         self.End_time_combobox.bind("<FocusIn>", lambda e: combobox_frame.focus_set())
 
+        # Create a frame for the bottom section (error message and confirm button)
+        bottom_frame = tk.Frame(self.pick_date_popup, bg=POPUP_BG_COLOR)
+        bottom_frame.grid(row=3, column=0, pady=(5, 10), padx=15, sticky='ew')
+        bottom_frame.grid_columnconfigure(0, weight=1)  # Make the frame expandable
+
+        # Error message label (initially hidden)
+        self.error_label = tk.Label(
+            bottom_frame,
+            text="Select a time later than the current time.",
+            fg="red",
+            bg=POPUP_BG_COLOR,
+            font=FONT_SMALL_ERROR  # Smaller font size
+        )
+        self.error_label.grid(row=0, column=0, sticky='ew', pady=(0, 5))
+        self.error_label.grid_remove()  # Hide it initially
+
         # Confirm Button
         confirm_button = tk.Button(
-            self.pick_date_popup, 
-            text="Confirm", 
-            bg=BUTTON_COLOR, 
-            fg="white", 
-            font=FONT_SMALL, 
-            relief="flat", 
+            bottom_frame,
+            text="Confirm",
+            bg=BUTTON_COLOR,
+            fg="white",
+            font=FONT_SMALL,
+            relief="flat",
             command=self.confirm_selection
         )
-        confirm_button.grid(row=3, column=0, pady=10, padx=15, sticky='e')
+        confirm_button.grid(row=1, column=0, sticky='e')
 
         # Force focus and lift the window
         self.pick_date_popup.focus_force()
@@ -397,13 +414,16 @@ class AddNotePopup:
             if selected_day_adjusted == current_day:
                 # If it's today, ensure the selected time is later than the current time
                 if selected_datetime <= current_time:
-                    print("Time Error: Please select a time later than the current time.")
+                    self.error_label.grid()  # Show the error message
+                    self.pick_date_popup.after(3000, self.error_label.grid_remove)  # Hide after 3 seconds
                     self.pick_date_popup.focus_force()
                     return
             elif selected_day_adjusted < current_day:
                 # If the selected day is earlier in the week, assume it's for next week
                 print("Date Info: The selected day is in the next week.")
-                self.pick_date_popup.focus_force()
+
+            # Hide the error message if it was previously shown
+            self.error_label.grid_remove()
 
             # Update the Choose Date button text
             day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
