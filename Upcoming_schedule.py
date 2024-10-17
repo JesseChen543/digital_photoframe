@@ -434,11 +434,14 @@ class ViewSchedulePopup:
         """Helper method to add event image to the item frame."""
         try:
             if story and isinstance(story, str):
+                # if there is an url, fetch the image from the url
                 if story.startswith('http'):
                     response = requests.get(story)
                     img = Image.open(BytesIO(response.content))
+                # if there is no url, open the image from the local folder
                 else:
                     img = Image.open(story)
+            #
             else:
                 img = Image.open(SCHEDULE_PICTURE)
 

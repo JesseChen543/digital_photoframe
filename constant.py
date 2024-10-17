@@ -72,3 +72,5 @@ FONT_PREFILLED = ("Open Sans", 9)
 
 # Time options
 TIME_OPTIONS = [f"{h:02d}:00" for h in range(0, 24)]  # Generates times from 00:00 to 23:00
+
+

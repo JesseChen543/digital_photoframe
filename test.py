@@ -382,7 +382,7 @@ class PhotoFrameApp:
         """Quit the application and close all child windows."""
         # Close all child windows
         for child in self.child_windows:
-            if child.winfo_exists():
+            if child.winfo_exists():    
                 child.destroy()
         # Close the main window
         self.root.quit()
