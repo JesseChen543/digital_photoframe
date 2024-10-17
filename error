@@ -1,2 +1,2 @@
-Current time: 2024-10-18 05:39:57.673258
-An unexpected error occurred while fetching user events: 'PhotoFrameApp' object has no attribute 'story
+distance stuff for sensor.py:12: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(TRIG, GPIO.OUT)
