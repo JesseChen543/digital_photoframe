@@ -17,6 +17,9 @@ FRAME_HEIGHT_COLLAPSED = 50
 FRAME_HEIGH_EXPANDED = 80
 ICON_SIZE = 40
 
+#other dimensions
+HEADER_HEIGHT = 50  
+
 #input dimensions 
 LIST_NAME_WIDTH = 32
 
@@ -41,6 +44,9 @@ MEMBER_ICON = "pictures/membericon.png"
 SCHEDULE_PICTURE = "pictures/schedule pic.png"
 TICK_ICON = "pictures/tick.png"
 
+# abse url for all the images
+BASE_URL = "https://deco3801-foundjesse.uqcloud.net/uploads/"
+
 # Colors
 LANDING_BG_COLOR = "#5081FF"
 LANDING_FG_COLOR = "#FFFFFF"
@@ -56,8 +62,6 @@ PICK_DATE_TEXT_COLOR = "#333333"
 PICK_DATE_PREFILLED_COLOR = "#9B9B9B"
 CHOOSE_DATE_PREFILLED_COLOR = "#3F3F3F"
 PREFILLED_BG_COLOR = "#F1F3F7"
-
-
 
 # Font styles
 FONT_LOGO = ("Pacifico", 30)

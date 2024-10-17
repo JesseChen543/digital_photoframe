@@ -1,3 +1,8 @@
+#[1] "Python | winfo_ismapped() and winfo_exists() in Tkinter," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/python-winfo_ismapped-and-winfo_exist-in-tkinter/#:~:text=winfo_exists()%20method%20%E2%80%93,widget%20is%20destroyed%20or%20not.&text=Return%20value%3A%20Returns%20True%20if%20widget%20exists%2C%20False%20otherwise. [Accessed: 11-Oct-2024].
+#[2] "How to delete or destroy Label in tkinter?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/52059974/how-to-delete-or-destroy-label-in-tkinter. [Accessed: 11-Oct-2024].
+#[3] "How to justify text in label in Tkinter," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/37318060/how-to-justify-text-in-label-in-tkinter. [Accessed: 11-Oct-2024].
+#[4] "Python hasattr() Function," W3Schools. [Online]. Available: https://www.w3schools.com/python/ref_func_hasattr.asp. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
 from tkinter import Frame, Label, Button
 from PIL import Image, ImageTk

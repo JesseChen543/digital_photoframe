@@ -1,3 +1,5 @@
+#[1] "QR Code Generator," goQR.me. [Online]. Available: https://goqr.me/api/. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests

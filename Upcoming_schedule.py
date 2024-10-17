@@ -1,3 +1,16 @@
+#[1] "Defaultdict in Python," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/defaultdict-in-python/. [Accessed: 11-Oct-2024].
+#[2] "Python strptime()," Programiz. [Online]. Available: https://www.programiz.com/python-programming/datetime/strptime. [Accessed: 11-Oct-2024].
+#[3] "Tkinter Scrollbar," Tutorials Point. [Online]. Available: https://www.tutorialspoint.com/python/tk_scrollbar.htm. [Accessed: 11-Oct-2024].
+#[4] "Python Canvas bbox returns None," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/67957589/python-canvas-bbox-returns-none. [Accessed: 11-Oct-2024].
+#[5] "Tkinter: How to change the color of a button when clicked," Python Forum. [Online]. Available: https://python-forum.io/thread-32748.html. [Accessed: 11-Oct-2024].
+#[6] "How to get .grid_columnconfigure() working inside Frame?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/57168146/how-to-get-grid-columnconfigure-working-inside-frame. [Accessed: 11-Oct-2024].
+#[7] "Python Lambda," W3Schools. [Online]. Available: https://www.w3schools.com/python/python_lambda.asp. [Accessed: 11-Oct-2024].
+#[8] "Python PIL | ImageEnhance.Brightness() and ImageEnhance.Sharpness() method," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/python-pil-imageenhance-brightness-and-imageenhance-sharpness-method/. [Accessed: 11-Oct-2024].
+#[9] "ImageEnhance Module," Pillow Documentation. [Online]. Available: https://pillow.readthedocs.io/en/stable/reference/ImageEnhance.html. [Accessed: 11-Oct-2024].
+#[10] "Python Requests post() Method," W3Schools. [Online]. Available: https://www.w3schools.com/python/ref_requests_post.asp. [Accessed: 11-Oct-2024].
+#[11] "Python Tkinter canvas.xview units," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/6863921/python-tkinter-canvas-xview-units. [Accessed: 11-Oct-2024].
+
+
 import tkinter as tk
 from tkinter import Frame, Label, Canvas, Scrollbar, ttk
 from PIL import Image, ImageTk, ImageEnhance
@@ -153,7 +166,6 @@ class ViewSchedulePopup:
             PopupHeader(parent=self.main_frame, title_text="Upcoming Schedule", on_close=self.close_popup)
 
             # Create a frame to contain the canvas and scrollbar with a fixed height
-            HEADER_HEIGHT = 50  # Adjust this value based on your actual header height
             content_height = POPUP_HEIGHT - HEADER_HEIGHT
 
             content_frame = Frame(self.main_frame, bg=POPUP_BG_COLOR, height=content_height)
@@ -293,8 +305,11 @@ class ViewSchedulePopup:
         attendees_frame = Frame(item_frame, bg="white")
         attendees_frame.grid(row=5, column=0, sticky="w", padx=5, pady=(0, 5))
 
-        for icon_url in family_icons:
+        for icon_file_name in family_icons:
             try:
+                # Prepend BASE_URL to the icon file name
+                icon_url = BASE_URL + icon_file_name
+                
                 response = requests.get(icon_url)
                 img = Image.open(BytesIO(response.content))
                 img = img.resize((20, 20), Image.LANCZOS)
@@ -434,14 +449,12 @@ class ViewSchedulePopup:
         """Helper method to add event image to the item frame."""
         try:
             if story and isinstance(story, str):
-                # if there is an url, fetch the image from the url
-                if story.startswith('http'):
-                    response = requests.get(story)
-                    img = Image.open(BytesIO(response.content))
-                # if there is no url, open the image from the local folder
-                else:
-                    img = Image.open(story)
-            #
+                # Prepend BASE_URL to the story file name
+                image_url = BASE_URL + story
+                
+                # Fetch the image from the constructed URL
+                response = requests.get(image_url)
+                img = Image.open(BytesIO(response.content))
             else:
                 img = Image.open(SCHEDULE_PICTURE)
 
@@ -462,16 +475,36 @@ class ViewSchedulePopup:
             print(f"Error loading image: {e}")
 
     def format_date_time(self, date_time_str):
+        """Convert a datetime string to a formatted string.
+
+        Args:
+            date_time_str (str): The datetime string in the format "YYYY-MM-DD HH:MM:SS".
+
+        Returns:
+            str: The formatted datetime string in the format "DD/MM/YYYY HH:MM".
+        """
         # Parse the datetime string
         dt = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
         # Format it as desired
         return dt.strftime("%d/%m/%Y %H:%M")
 
     def _on_mousewheel(self, event):
+        """Scroll the canvas vertically based on mouse wheel movement.
+
+        Args:
+            event: The event object containing information about the mouse wheel movement.
+        """
         self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def get_user_id_from_icon(self, clicked_icon):
-        """Get user_id associated with the clicked icon URL."""
+        """Get user_id associated with the clicked icon URL.
+
+        Args:
+            clicked_icon (str): The URL of the clicked icon.
+
+        Returns:
+            str or None: The user_id if found, otherwise None.
+        """
         url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
         try:
             response = requests.get(url)

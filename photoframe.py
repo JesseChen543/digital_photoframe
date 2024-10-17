@@ -1,3 +1,11 @@
+#[1] "Load data from php file into python," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/69581729/load-data-from-php-file-into-python. [Accessed: 08-Oct-2024].
+#[2] "Customizing Your Tkinter App's Windows," Python GUIs. [Online]. Available: https://www.pythonguis.com/tutorials/customized-windows-tkinter/. [Accessed: 09-Oct-2024].
+#[3] "How to delete and recreate a canvas? (Tkinter / Canvas)," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/63251775/how-to-delete-and-recreate-a-canvas-tkinter-canvas. [Accessed: 10-Mar-2024].
+#[4] "datetime — Basic date and time types," Python Documentation. [Online]. Available: https://docs.python.org/3/library/datetime.html. [Accessed: 11-Oct-2024].
+#[5] "When to use raise_for_status vs status_code testing," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/61463224/when-to-use-raise-for-status-vs-status-code-testing. [Accessed: 11-Oct-2024].
+#[6] "Tkinter - how to resize frame," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/68270730/tkinter-how-to-resize-frame. [Accessed: 11-Oct-2024].
+#[7] "Programmatically generate video or animated GIF in Python?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/753190/programmatically-generate-video-or-animated-gif-in-python. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
@@ -163,7 +171,6 @@ class PhotoFrameApp:
         print(f"Current time: {current_time}")
 
         try:
-            # Use the story URL if available, otherwise proceed with existing logic
             if self.story:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
@@ -240,14 +247,15 @@ class PhotoFrameApp:
         except Exception as e:
             self.display_error(f"An unexpected error occurred while fetching user events: {str(e)}")
 
-    def load_and_display_image(self, image_url):
+    def load_and_display_image(self, image_file_name):
         """
-        Load and display an image from a given URL.
+        Load and display an image from a given file name.
         Supports both static images and animated GIFs.
 
         Args:
-            image_url (str): The URL of the image to be displayed.
+            image_file_name (str): The file name of the image to be displayed.
         """
+        image_url = BASE_URL + image_file_name  # Construct the full URL
         try:
             response = requests.get(image_url)
             response.raise_for_status()

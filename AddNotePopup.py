@@ -1,3 +1,14 @@
+#[1] "Using class structure with Python protocol delete window handlers," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/9372317/using-class-structure-with-python-protocol-delete-window-handlers. [Accessed: 11-Oct-2024].
+#[2] K. Oh, "Getting Tkinter pack_forget to work only on unique objects," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/8955921/getting-tkinter-pack-forget-to-work-only-on-unique-objects. [Accessed: 11-Oct-2024].
+#[3] "Tkinter Entry," Tutorials Point. [Online]. Available: https://www.tutorialspoint.com/python/tk_entry.htm. [Accessed: 11-Oct-2024].
+#[4] "What is the idea behind scaling an image using Lanczos?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/1854146/what-is-the-idea-behind-scaling-an-image-using-lanczos. [Accessed: 11-Oct-2024].
+#[5] "Hide Python Tkinter Text widget border," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/hide-python-tkinter-text-widget-border/. [Accessed: 11-Oct-2024].
+#[6] "pyglet.window," Pyglet Documentation. [Online]. Available: https://pyglet.readthedocs.io/en/latest/modules/window.html. [Accessed: 11-Oct-2024].
+#[7] "Tkinter Toplevel," Tutorials Point. [Online]. Available: https://www.tutorialspoint.com/python/tk_toplevel.htm. [Accessed: 11-Oct-2024].
+#[8] "Python | grid() method in Tkinter," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/python-grid-method-in-tkinter/. [Accessed: 11-Oct-2024].
+#[9] "Combobox Widget in Tkinter," GeeksforGeeks. [Online]. Available: https://www.geeksforgeeks.org/combobox-widget-in-tkinter-python/. [Accessed: 11-Oct-2024].
+
+
 import tkinter as tk
 from tkinter import ttk, Frame
 from PIL import Image, ImageTk

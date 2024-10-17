@@ -1,3 +1,5 @@
+#[1] "threading — Thread-based parallelism," Python Documentation. [Online]. Available: https://docs.python.org/3/library/threading.html. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
 from tkinter import PhotoImage
 from PIL import Image, ImageTk

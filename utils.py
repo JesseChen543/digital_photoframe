@@ -1,3 +1,5 @@
+#[1] "Tkinter: update vs update_idletasks," Reddit. [Online]. Available: https://www.reddit.com/r/learnpython/comments/n7v2k4/tkinter_update_vs_update_idletasks/. [Accessed: 11-Oct-2024].
+
 from constant import *
 
 def center_window_parent(window, width, height):
