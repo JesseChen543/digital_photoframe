@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-import time
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
