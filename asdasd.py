@@ -337,7 +337,7 @@ class PhotoFrameApp:
                         response.raise_for_status()
                         fallback_data = response.json()
                         if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
-                            fallback_photo = fallback_data[0]['file_name']
+                            fallback_photo = fallback_data[0]['url']
                             print(f"Fallback Photo URL: {fallback_photo}")
                             self.load_and_display_image(fallback_photo)
                         else:
