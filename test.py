@@ -461,32 +461,33 @@ class PhotoFrameApp:
         return round(distance, 2)
 
     def distance_monitor(self):
-        """Continuously monitor the distance and update icon opacity."""
+        """Simulate distance changes every 10 seconds."""
+        simulated_distance = 46
         while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                print(f"Distance: {distance} cm")
-                
-                # Update icon opacity
-                if distance <= 45:
-                    self.update_icon_opacity(1.0)  # Fully opaque
+            print(f"Simulated Distance: {simulated_distance} cm")
+            
+            # Update icon opacity
+            if simulated_distance <= 45:
+                self.update_icon_opacity(1.0)  # Fully opaque
 
-                    # If GIF is not playing, start it
-                    if not self.is_gif_playing:
-                        print("Object detected within 45 cm - Starting GIF")
-                        self.is_gif_playing = True
-                        self.animate_gif(self.gif_image)  # Start playing the GIF
+                # If GIF is not playing, start it
+                if not self.is_gif_playing:
+                    print("Object detected within 45 cm - Starting GIF")
+                    self.is_gif_playing = True
+                    self.animate_gif(self.gif_image)  # Start playing the GIF
 
-                else:
-                    self.update_icon_opacity(0.0)  # Fully transparent
+            else:
+                self.update_icon_opacity(0.0)  # Fully transparent
 
-                    # If GIF is playing, stop it
-                    if self.is_gif_playing:
-                        print("No object within 45 cm - Pausing GIF")
-                        self.is_gif_playing = False
-                        self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
+                # If GIF is playing, stop it
+                if self.is_gif_playing:
+                    print("No object within 45 cm - Pausing GIF")
+                    self.is_gif_playing = False
+                    self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
 
-            time.sleep(0.3)
+            # Toggle the simulated distance every 10 seconds
+            time.sleep(10)
+            simulated_distance = 42 if simulated_distance == 46 else 46
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""

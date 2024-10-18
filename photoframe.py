@@ -19,6 +19,7 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from constant import *
 import time
+import threading
 
 class PhotoFrameApp:
     """
@@ -59,8 +60,17 @@ class PhotoFrameApp:
         # Initialize story property
         self.story = None
         
+        # Initialize user_events as an empty list
+        self.user_events = []
+
+        # Initialize current_event
+        self.current_event = None
+
         # Fetch user events and set the story
         self.fetch_user_events()
+
+        # Now it's safe to call update_current_event
+        self.update_current_event()
 
         # Initialize saved inputs
         self.saved_notes = []
@@ -90,8 +100,9 @@ class PhotoFrameApp:
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
-        self.current_event = None
-        self.update_current_event()
+        # Start the periodic update thread
+        self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
+        self.update_thread.start()
 
     def get_user_id(self, frame_id):
         """
@@ -130,6 +141,7 @@ class PhotoFrameApp:
 
     def fetch_user_events(self):
         """Fetch user events and set the story property."""
+        print("\n--- Fetching user events ---")  # New print statement
         special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
         
         try:
@@ -143,6 +155,7 @@ class PhotoFrameApp:
             
             # The story will be set in the update_current_event method
             self.story = None
+            print("--- Fetch complete ---")  
 
         except requests.RequestException as e:
             print(f"Failed to fetch user events: {str(e)}")
@@ -150,6 +163,26 @@ class PhotoFrameApp:
             print(f"Invalid JSON response for user events: {str(e)}")
         except Exception as e:
             print(f"An unexpected error occurred while fetching user events: {str(e)}")
+
+    def update_data_periodically(self):
+        update_count = 0
+        while True:
+            try:
+                update_count += 1
+                print(f"\n=== Starting periodic update #{update_count} ===")
+                self.fetch_user_events()
+                self.update_current_event()
+                if self.current_event and self.story:
+                    print("Fetching and displaying new image")
+                    self.fetch_and_display_image()
+                else:
+                    print("No current event or story, skipping image update")
+                print(f"=== Periodic update #{update_count} complete ===")
+            except Exception as e:
+                print(f"Error during periodic update: {str(e)}")
+            finally:
+                print(f"Waiting 60 seconds before next update...")
+                time.sleep(10)  # Wait for 10 seconds before the next update
 
     def fetch_and_display_image(self):
         """
@@ -279,37 +312,33 @@ class PhotoFrameApp:
             self.display_error(f"Error loading image: {str(e)}")
 
     def update_current_event(self):
-        """Update the current_event based on the current time and event times."""
         current_time = datetime.now()
+        new_current_event = None
+        new_story = None
         
-        print("\nAll events:")
+        print("\nChecking for current event:")
         for event in self.user_events:
             start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
             end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
-            event_id = event['event_id']
-            event_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={event_id}"
-            
-            print(f"Event: {event['event_name']}")
-            print(f"  Start: {start_time}")
-            print(f"  End: {end_time}")
-            print(f"  URL: {event_url}")
-            print(f"  Story: {event['story']}")
             
             if start_time <= current_time <= end_time:
-                self.current_event = event
-                self.story = event['story']  # Set the story from the current event
-                print("  ** This is the current event **")
-            print()
-
-        if self.current_event:
-            print(f"\nCurrent event: {self.current_event['event_name']}")
-            print(f"Current story: {self.story}")
+                new_current_event = event
+                new_story = event['story']
+                print(f"Current event found: {event['event_name']}")
+                break
+        
+        if new_current_event != self.current_event or new_story != self.story:
+            print("Current event or story has changed!")
+            self.current_event = new_current_event
+            self.story = new_story
+            
+            if self.current_event:
+                print(f"\nUpdated current event: {self.current_event['event_name']}")
+                print(f"Updated story: {self.story}")
+            else:
+                print("\nNo current event")
         else:
-            print("\nNo current event")
-            self.current_event = None
-            self.story = None
-
-        print(f"Final story value: {self.story}")
+            print("No change in current event or story.")
 
     def animate_gif(self, image):
         """
@@ -393,10 +422,9 @@ class PhotoFrameApp:
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
 
-
 if __name__ == "__main__":
     root = tk.Tk()
     root.overrideredirect(True)  # Remove window decorations
     root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
-    root.mainloop()
+    root.mainloop()  # Make sure this line is here
