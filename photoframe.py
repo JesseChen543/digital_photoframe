@@ -23,26 +23,6 @@ import threading
 import RPi.GPIO as GPIO
 
 
-class CanvasButton:
-    def __init__(self, canvas, x, y, image_path, command):
-        self.canvas = canvas
-        self.x = x
-        self.y = y
-        self.image = Image.open(image_path)
-        self.photo_image = ImageTk.PhotoImage(self.image)
-        self.button = self.canvas.create_image(x, y, image=self.photo_image, anchor='nw')
-        self.canvas.tag_bind(self.button, '<Button-1>', lambda event: command())
-        self.opacity = 0.0
-
-    def set_opacity(self, opacity):
-        self.opacity = opacity
-        # Create a new image with the desired opacity
-        image = self.image.copy()
-        alpha = image.split()[3]
-        alpha = alpha.point(lambda p: int(p * opacity))
-        image.putalpha(alpha)
-        self.photo_image = ImageTk.PhotoImage(image)
-        self.canvas.itemconfig(self.button, image=self.photo_image)
 
 class PhotoFrameApp:
     """
@@ -407,18 +387,19 @@ class PhotoFrameApp:
         error_label.place(x=0, y=0, relwidth=1, relheight=1)
 
     def add_buttons(self):
-        """Add interactive buttons to the canvas."""
-        # Add add-note icon using CanvasButton
+        """Add interactive buttons to the canvas with initial opacity of 0."""
         self.add_note_button = CanvasButton(self.canvas, NOTE_ICON_X, NOTE_ICON_Y, 
-                     WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note)
+                     WRITE_NOTE_ICON_IMAGE_PATH, self.add_note_popup.add_note, initial_opacity=0)
 
         self.view_schedule_button = CanvasButton(self.canvas, CALENDAR_ICON_X, CALENDAR_ICON_Y, 
-                     UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules)
+                     UPCOMING_SCHEDULE_ICON, self.view_schedule_popup.show_schedules, initial_opacity=0)
 
         # Create the list icon button if self.saved_notes is not empty
         if self.saved_notes:
             self.view_note_button = CanvasButton(self.canvas, LIST_ICON_X, LIST_ICON_Y, 
-                         LIST_ICON, self.view_note_popup.show_notes)
+                         LIST_ICON, self.view_note_popup.show_notes, initial_opacity=0)
+        else:
+            self.view_note_button = None
 
     def update_view_note_button(self):
         """Creates the list button if it doesn't exist and there are saved notes."""
@@ -429,7 +410,8 @@ class PhotoFrameApp:
                 LIST_ICON_X,
                 LIST_ICON_Y,
                 LIST_ICON,
-                self.view_note_popup.show_notes
+                self.view_note_popup.show_notes,
+                initial_opacity=0
             )
 
     def quit_app(self, event=None):
