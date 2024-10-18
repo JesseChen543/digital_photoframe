@@ -32,7 +32,7 @@ class CanvasButton:
         self.photo_image = ImageTk.PhotoImage(self.image)
         self.button = self.canvas.create_image(x, y, image=self.photo_image, anchor='nw')
         self.canvas.tag_bind(self.button, '<Button-1>', lambda event: command())
-        self.opacity = 1.0
+        self.opacity = 0.0
 
     def set_opacity(self, opacity):
         self.opacity = opacity
@@ -43,7 +43,7 @@ class CanvasButton:
         image.putalpha(alpha)
         self.photo_image = ImageTk.PhotoImage(image)
         self.canvas.itemconfig(self.button, image=self.photo_image)
-        
+
 class PhotoFrameApp:
     """
     A class representing the main photo frame application.
