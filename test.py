@@ -531,12 +531,12 @@ try:
 
 
 
-        if __name__ == "__main__":
-            root = tk.Tk()
-            root.overrideredirect(True)  # Remove window decorations
-            root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
-            app = PhotoFrameApp(root)
-            root.mainloop()
+    if __name__ == "__main__":
+        root = tk.Tk()
+        root.overrideredirect(True)  # Remove window decorations
+        root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
+        app = PhotoFrameApp(root)
+        root.mainloop()
 
 except Exception as e:
     error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
