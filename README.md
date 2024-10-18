@@ -13,7 +13,7 @@ Before installing the application, ensure you have the following
       - Ultrasonic sensor (HC-SR04)
       - RPG LEDs
       - Internet connection
-2. Software Requirements:
+2. #### Software Requirements:
       - Python 3.x
       - Required Python libraries
         ```bash
