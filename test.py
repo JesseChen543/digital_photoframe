@@ -414,7 +414,7 @@ class PhotoFrameApp:
                 self.canvas.delete("all")  # Clear previous frame
                 self.canvas.create_image(0, 0, anchor='nw', image=frames[frame_num])
                 next_frame = (frame_num + 1) % len(frames)
-                self.gif.animation_id = self.root.after(100, update_frame, next_frame)  # Adjust delay as needed
+                self.gif_animation_id = self.root.after(100, update_frame, next_frame)  # Adjust delay as needed
             self.add_buttons()  # Ensure buttons are always on top
 
         update_frame(0)
