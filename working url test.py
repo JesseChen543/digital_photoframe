@@ -12,6 +12,7 @@ import requests
 from io import BytesIO  
 import threading
 from constant import * 
+import tkinter.ttk as ttk
 
 # GPIO Mode (BOARD / BCM)
 GPIO.setmode(GPIO.BCM)
@@ -42,11 +43,29 @@ class PhotoFrameApp:
         self.root = root
         self.root.title("Image Display with Clickable Icon")
 
-        # Remove window decorations
-        self.root.overrideredirect(True)
-        
-        # Set full screen size
-        self.root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")
+        # Remove window decorations and set to fullscreen
+        self.root.attributes('-fullscreen', True)
+        self.root.config(cursor="none")  # Hide the mouse cursor
+
+        # Get screen width and height
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()
+
+        # Set window size to screen size
+        self.root.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
+
+        # Create a style
+        style = ttk.Style(self.root)
+        style.configure('TFrame', background='black')
+
+        # Create main frame
+        self.main_frame = ttk.Frame(self.root, style='TFrame')
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Create canvas
+        self.canvas = tk.Canvas(self.main_frame, width=self.screen_width, height=self.screen_height, 
+                                bd=0, highlightthickness=0, bg='black')
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # Initialize list to keep track of child windows
         self.child_windows = []
@@ -115,6 +134,11 @@ class PhotoFrameApp:
         # Start the periodic update thread
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
+
+        # Bind F11 to toggle fullscreen
+        self.root.bind('<F11>', self.toggle_fullscreen)
+        # Bind Escape to exit fullscreen or quit
+        self.root.bind('<Escape>', self.quit_fullscreen)
 
     def measure_distance(self):
         """Measure the distance using the ultrasonic sensor."""
@@ -479,9 +503,16 @@ class PhotoFrameApp:
         """Unregister a child window."""
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
+    def toggle_fullscreen(self, event=None):
+        self.root.attributes('-fullscreen', not self.root.attributes('-fullscreen'))
+
+    def quit_fullscreen(self, event=None):
+        if self.root.attributes('-fullscreen'):
+            self.root.attributes('-fullscreen', False)
+        else:
+            self.quit_app()
+
 if __name__ == "__main__":
     root = tk.Tk()
-    root.overrideredirect(True)  # Remove window decorations
-    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
