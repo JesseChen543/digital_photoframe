@@ -1,24 +1,61 @@
 # Insync Photoframe
 
-Insync Photoframe is a python-based digital photoframe application that is designed for a Raspberry Pi using Tkinter GUI framework. The application displays event-based images or GIFs based on detecting user proximity using an ultrasonic sensor and integrates RGB LEDs to show the user's status
+Insync Photoframe is a python-based digital photoframe application that turns your Raspberry Pi into an interactive photo frame and is designed with features such as adding notes, viewing schedules, and an LED-based status indicator. It also comes with a ultrasonic sensor to interactively respond to proximity
 
-# Requirements
- - **Hardware:**
-   - Raspberry Pi with GPIO support
-   - RGB LED
-   - Ultrasonic sensor (TRIG on GPIO 17, ECHO on GPIO 27)
+# Prerequisites
+Before installing the application, ensure you have the following
+   - Raspberry Pi with GPIO access
+   - Ultrasonic sensor (HC-SR04)
+   - RPG LEDs
+   - Internet connection
+1. # Hardware Requirement:
+      - Raspberry Pi with GPIO access
+      - Ultrasonic sensor (HC-SR04)
+      - RPG LEDs
+      - Internet connection
+2. # Software Requirements:
+      - Python 3.x
+      - Required Python libraries
+        ```bash
+        sudo pip install RPi.GPIO Pillow requests
+        ```
 
- - **Software:**
-   - Python 3.x
-   - Required Python libraries:
-     - `RPi.GPIO` (GPIO handling)
-     - `Pillow` (image and GIF handling)
-     - `Requests` (API calls)
-    
+# Setup Instructions
 
- # Installation and Setup
- 
-1. **Install Dependencies:** Ensure Python is installed, then install the required Python libraries using `pip`:
+# 1. Clone the Repository
 
+To get started, you must first clone this repository to your Raspberry Pi:
 ```bash
-sudo apt-get install python3-rpi.gpio
+git clone <https://github.com/JesseChen543/digital_photoframe.git>
+cd digital_photoframe
+```
+
+# 2. Install Required Dependencies: 
+Install the necessary Python libraries (RPi.GPIO, Pillow, requests)
+```bash
+sudo pip install Rpi.GPIO Pillow requests
+```
+# 3. Wiring Setup
+ - Connect the ultrasonic sensor to GPIO pins 17 (TRIG) and 27 (ECHO)
+ - Connect the RGB LED to GPIO pins 12 (Red), 16 (Yellow), and 26 (Green).
+
+# Running the Application
+# 1. Run the Python Script:
+Execute the main script to start the photoframe application:
+```bash
+python3 photoframe.py
+```
+# 2. Functionality:
+ - The app will load event-based images and change LED colours based on user status.
+ - The ultrasonic sensor will trigger GIF animations when objects are detected within 45cm.
+
+#GPIO Cleanup
+
+To safely shut down the application and clean up the GPIO pins:
+```bash
+Ctrl + C
+```
+
+# Notes
+ - Ensure the Raspberry Pi is properly configured with Python and internet access
+ - Adjust the script if necessary to match your GPIO wiring.
