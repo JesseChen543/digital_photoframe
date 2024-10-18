@@ -510,11 +510,9 @@ class ViewSchedulePopup:
             response = requests.get(url)
             response.raise_for_status()
             data = response.json()
-            
             for event in data:
                 if BASE_URL + event['icon'] == clicked_icon:
                     return event['attending_user']
-            
             print(f"No user found with icon URL: {clicked_icon}")
             return None
         except requests.RequestException as e:
