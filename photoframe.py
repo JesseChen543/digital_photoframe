@@ -190,11 +190,7 @@ class PhotoFrameApp:
                         photo_data = response.json()
 
                         if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
-<<<<<<< HEAD
-                            photo_url = photo_data[0]['file_name']
-=======
                             photo_url = photo_data[0]['filename']
->>>>>>> 574157b94dcc33152feae622a93e4d9093a9a0f4
                             time_difference = end_time - current_time
                             print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
                             
