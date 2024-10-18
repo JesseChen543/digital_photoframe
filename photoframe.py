@@ -90,6 +90,8 @@ class PhotoFrameApp:
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
+        self.current_event = None
+        self.update_current_event()
 
     def get_user_id(self, frame_id):
         """
@@ -133,18 +135,14 @@ class PhotoFrameApp:
         try:
             response = requests.get(special_user_url)
             response.raise_for_status()
-            user_events = response.json()
-
-            # Find the first event with a story
-            for event in user_events:
-                if event['story']:
-                    self.story = event['story']
-                    break
-
-            if self.story:
-                print(f"Story set: {self.story}")
-            else:
-                print("No story found in user events")
+            self.user_events = response.json()  # Store all events
+            
+            print("Fetched user events:")
+            for event in self.user_events:
+                print(f"Event: {event['event_name']}, Start: {event['start_time']}, End: {event['end_time']}, Story: {event['story']}")
+            
+            # The story will be set in the update_current_event method
+            self.story = None
 
         except requests.RequestException as e:
             print(f"Failed to fetch user events: {str(e)}")
@@ -169,9 +167,14 @@ class PhotoFrameApp:
         smallest_time_difference = timedelta.max  # Initialize with maximum possible timedelta
 
         try:
-            if self.story:
+            # Update current event before fetching image
+            self.update_current_event()
+            
+            # if there is story and the sensor sense someone use the story
+            if self.story and self.current_event:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
+            # or use the photo with attendee
             else:
                 # Fetch user's events
                 response = requests.get(special_user_url)
@@ -218,6 +221,7 @@ class PhotoFrameApp:
                     print(f"Time Difference: {smallest_time_difference}")
                     print(f"Photo URL: {event_photo}")
                     self.load_and_display_image(event_photo)
+                # if no photo together with the attendee, use the solo photo of the user
                 else:
                     print("\nNo suitable future event photo found. Using fallback URL.")
                     try:
@@ -273,6 +277,39 @@ class PhotoFrameApp:
             self.add_buttons()
         except Exception as e:
             self.display_error(f"Error loading image: {str(e)}")
+
+    def update_current_event(self):
+        """Update the current_event based on the current time and event times."""
+        current_time = datetime.now()
+        
+        print("\nAll events:")
+        for event in self.user_events:
+            start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
+            end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
+            event_id = event['event_id']
+            event_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={event_id}"
+            
+            print(f"Event: {event['event_name']}")
+            print(f"  Start: {start_time}")
+            print(f"  End: {end_time}")
+            print(f"  URL: {event_url}")
+            print(f"  Story: {event['story']}")
+            
+            if start_time <= current_time <= end_time:
+                self.current_event = event
+                self.story = event['story']  # Set the story from the current event
+                print("  ** This is the current event **")
+            print()
+
+        if self.current_event:
+            print(f"\nCurrent event: {self.current_event['event_name']}")
+            print(f"Current story: {self.story}")
+        else:
+            print("\nNo current event")
+            self.current_event = None
+            self.story = None
+
+        print(f"Final story value: {self.story}")
 
     def animate_gif(self, image):
         """
@@ -354,6 +391,8 @@ class PhotoFrameApp:
     def unregister_child_window(self, window):
         """Unregister a child window."""
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
