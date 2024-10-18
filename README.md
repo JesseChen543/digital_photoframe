@@ -20,7 +20,7 @@ Before installing the application, ensure you have the following
         sudo pip install RPi.GPIO Pillow requests
         ```
 
-## Setup Instructions
+# Setup Instructions
 
 ### 1. Clone the Repository
 
@@ -40,22 +40,22 @@ sudo pip install Rpi.GPIO Pillow requests
  - Connect the RGB LED to GPIO pins 12 (Red), 16 (Yellow), and 26 (Green).
 
 # Running the Application
-# 1. Run the Python Script:
+### 1. Run the Python Script:
 Execute the main script to start the photoframe application:
 ```bash
 python3 photoframe.py
 ```
-# 2. Functionality:
+### 2. Functionality:
  - The app will load event-based images and change LED colours based on user status.
  - The ultrasonic sensor will trigger GIF animations when objects are detected within 45cm.
 
-#GPIO Cleanup
+## GPIO Cleanup
 
 To safely shut down the application and clean up the GPIO pins:
 ```bash
 Ctrl + C
 ```
 
-# Notes
+### Notes
  - Ensure the Raspberry Pi is properly configured with Python and internet access
  - Adjust the script if necessary to match your GPIO wiring.
