@@ -9,14 +9,13 @@
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
 import requests  
 from io import BytesIO  
-from datetime import datetime, timedelta
 from constant import *
 import time
 import RPi.GPIO as GPIO
@@ -61,8 +60,17 @@ class PhotoFrameApp:
         # Initialize story property
         self.story = None
         
+        # Initialize user_events as an empty list
+        self.user_events = []
+
+        # Initialize current_event
+        self.current_event = None
+
         # Fetch user events and set the story
         self.fetch_user_events()
+
+        # Update current event
+        self.update_current_event()
 
         # Initialize saved inputs
         self.saved_notes = []
@@ -91,9 +99,6 @@ class PhotoFrameApp:
 
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
-
-        self.current_event = None
-        self.update_current_event()
 
         # GPIO setup for LEDs
         self.LED_RED = 12    # GPIO pin for Red LED
@@ -461,33 +466,32 @@ class PhotoFrameApp:
         return round(distance, 2)
 
     def distance_monitor(self):
-        """Simulate distance changes every 10 seconds."""
-        simulated_distance = 46
+        """Continuously monitor the distance and update icon opacity."""
         while True:
-            print(f"Simulated Distance: {simulated_distance} cm")
-            
-            # Update icon opacity
-            if simulated_distance <= 45:
-                self.update_icon_opacity(1.0)  # Fully opaque
+            distance = self.measure_distance()
+            if distance is not None:
+                print(f"Distance: {distance} cm")
+                
+                # Update icon opacity
+                if distance <= 45:
+                    self.update_icon_opacity(1.0)  # Fully opaque
 
-                # If GIF is not playing, start it
-                if not self.is_gif_playing:
-                    print("Object detected within 45 cm - Starting GIF")
-                    self.is_gif_playing = True
-                    self.animate_gif(self.gif_image)  # Start playing the GIF
+                    # If GIF is not playing, start it
+                    if not self.is_gif_playing:
+                        print("Object detected within 45 cm - Starting GIF")
+                        self.is_gif_playing = True
+                        self.animate_gif(self.gif_image)  # Start playing the GIF
 
-            else:
-                self.update_icon_opacity(0.0)  # Fully transparent
+                else:
+                    self.update_icon_opacity(0.0)  # Fully transparent
 
-                # If GIF is playing, stop it
-                if self.is_gif_playing:
-                    print("No object within 45 cm - Pausing GIF")
-                    self.is_gif_playing = False
-                    self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
+                    # If GIF is playing, stop it
+                    if self.is_gif_playing:
+                        print("No object within 45 cm - Pausing GIF")
+                        self.is_gif_playing = False
+                        self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
 
-            # Toggle the simulated distance every 10 seconds
-            time.sleep(10)
-            simulated_distance = 42 if simulated_distance == 46 else 46
+            time.sleep(0.3)
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""
