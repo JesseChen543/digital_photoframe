@@ -8,7 +8,7 @@ Before installing the application, ensure you have the following
    - Ultrasonic sensor (HC-SR04)
    - RPG LEDs
    - Internet connection
-# 1. Hardware Requirement:
+1. ### Hardware Requirement:
       - Raspberry Pi with GPIO access
       - Ultrasonic sensor (HC-SR04)
       - RPG LEDs
