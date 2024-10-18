@@ -54,9 +54,9 @@ class PhotoFrameApp:
         self.story = None
 
         # GPIO setup for LEDs
-        self.LED_RED = 5    # GPIO pin for Red LED
-        self.LED_YELLOW = 6  # GPIO pin for Yellow LED
-        self.LED_GREEN = 13  # GPIO pin for Green LED
+        self.LED_RED = 12    # GPIO pin for Red LED
+        self.LED_YELLOW = 16  # GPIO pin for Yellow LED
+        self.LED_GREEN = 26  # GPIO pin for Green LED
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.LED_RED, GPIO.OUT)
@@ -82,11 +82,6 @@ class PhotoFrameApp:
         self.add_note_popup = AddNotePopup(self.root, self)
         self.view_note_popup = ViewNotePopup(self.root, self)
         self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
-        
-        self.is_gif_playing = False  # To track if the GIF is playing
-        self.gif_frames = []  # To store the GIF frames
-        self.current_frame = 0  # To track the current frame of the GIF
-        self.gif_animation_id = None  # To track the after() callback
 
         # Set GPIO pins
         self.TRIG = 17
@@ -136,22 +131,30 @@ class PhotoFrameApp:
         return round(distance, 2)
 
     def distance_monitor(self):
-        #Continuously monitor the distance and update icon opacity and GIF playing state."""
+        #Continuously monitor the distance and update icon opacity."""
         while True:
             distance = self.measure_distance()
             if distance is not None:
                 print(f"Distance: {distance} cm")
-                # Update icon opacity and GIF state based on distance
+                # Update icon opacity
                 if distance <= 45:
                     self.update_icon_opacity(1.0)  # Fully opaque
-                    if not self.is_gif_playing:
-                        self.is_gif_playing = True
-                        self.animate_gif(self.gif_image)
+
+                    # If GIF is not playing, start it
+                if not self.is_gif_playing:
+                    print("Object detected within 45 cm - Starting GIF")
+                    self.is_gif_playing = True
+                    self.animate_gif(self.gif_image)  # Start playing the GIF
+
+
                 else:
                     self.update_icon_opacity(0.0)  # Fully transparent
-                    if self.is_gif_playing:
-                        self.is_gif_playing = False
-                        self.stop_gif_at_first_frame()  # Stop GIF and show first frame
+
+                    # If GIF is playing, stop it
+                if self.is_gif_playing:
+                    print("No object within 45 cm - Pausing GIF")
+                    self.is_gif_playing = False
+                    self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
 
             time.sleep(0.3) 
 
@@ -280,8 +283,11 @@ class PhotoFrameApp:
         print(f"Current time: {current_time}")
 
         try:
+            # Measure distance once to use for the condition
+            distance = self.measure_distance()
+
             # Use the story URL if available, otherwise proceed with existing logic
-            if self.story:
+            if self.story and distance is not None and distance <= 45:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
             else:
@@ -302,7 +308,7 @@ class PhotoFrameApp:
                         photo_data = response.json()
 
                         if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
-                            photo_url = photo_data[0]['url']
+                            photo_url = photo_data[0]['filename']
                             time_difference = end_time - current_time
                             print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
                             
@@ -337,7 +343,7 @@ class PhotoFrameApp:
                         response.raise_for_status()
                         fallback_data = response.json()
                         if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
-                            fallback_photo = fallback_data[0]['url']
+                            fallback_photo = fallback_data[0]['filename']
                             print(f"Fallback Photo URL: {fallback_photo}")
                             self.load_and_display_image(fallback_photo)
                         else:

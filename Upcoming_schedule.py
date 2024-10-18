@@ -512,7 +512,7 @@ class ViewSchedulePopup:
             data = response.json()
             
             for event in data:
-                if event['icon'] == clicked_icon:
+                if BASE_URL + event['icon'] == clicked_icon:
                     return event['attending_user']
             
             print(f"No user found with icon URL: {clicked_icon}")
