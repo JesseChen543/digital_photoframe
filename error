@@ -1,7 +1,2 @@
-Traceback (most recent call last):
-  File "/usr/lib/python3.7/ast.py", line 35, in parse
-    return compile(source, filename, mode, PyCF_ONLY_AST)
-  File "/home/pi/Desktop/photoframe_final?/digital_photoframe-main/test.py", line 198
-    special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
-    ^
-IndentationError: unexpected indent
+distance stuff for sensor.py:12: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(TRIG, GPIO.OUT)

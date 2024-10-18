@@ -1,3 +1,4 @@
+import RPi.GPIO as GPIO
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
@@ -11,6 +12,7 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from constant import *
 import time
+import threading
 
 class PhotoFrameApp:
     """
@@ -69,6 +71,20 @@ class PhotoFrameApp:
         self.view_note_popup = ViewNotePopup(self.root, self)
         self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
         
+        self.is_gif_playing = False  # To track if the GIF is playing
+        self.gif_frames = []  # To store the GIF frames
+        self.current_frame = 0  # To track the current frame of the GIF
+        self.gif_animation_id = None  # To track the after() callback
+
+        # Set GPIO pins
+        self.TRIG = 17
+        self.ECHO = 27
+
+        # GPIO setup for ultrasonic sensor
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.TRIG, GPIO.OUT)
+        GPIO.setup(self.ECHO, GPIO.IN)
+
         # Create canvas
         self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
@@ -82,21 +98,23 @@ class PhotoFrameApp:
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
+        threading.Thread(target=self.distance_monitor, daemon=True).start()
+
     def measure_distance(self):
         """Measure the distance using the ultrasonic sensor."""
-        GPIO.output(TRIG, False)
-        time.sleep(2)
+        GPIO.output(self.TRIG, False)
+        time.sleep(0.2)
 
-        GPIO.output(TRIG, True)
+        GPIO.output(self.TRIG, True)
         time.sleep(0.00001)
-        GPIO.output(TRIG, False)
+        GPIO.output(self.TRIG, False)
 
         pulse_start = time.time()
-        while GPIO.input(ECHO) == 0:
+        while GPIO.input(self.ECHO) == 0:
             pulse_start = time.time()
 
         pulse_end = time.time()
-        while GPIO.input(ECHO) == 1:
+        while GPIO.input(self.ECHO) == 1:
             pulse_end = time.time()
 
         pulse_duration = pulse_end - pulse_start
@@ -104,17 +122,25 @@ class PhotoFrameApp:
         return round(distance, 2)
 
     def distance_monitor(self):
-        """Continuously monitor the distance and update icon opacity."""
+        #Continuously monitor the distance and update icon opacity and GIF playing state."""
         while True:
             distance = self.measure_distance()
             if distance is not None:
                 print(f"Distance: {distance} cm")
-                # Update icon opacity based on distance
+                # Update icon opacity and GIF state based on distance
                 if distance <= 45:
                     self.update_icon_opacity(1.0)  # Fully opaque
+                    if not self.is_gif_playing:
+                        self.is_gif_playing = True
+                        self.animate_gif(self.gif_image)
                 else:
                     self.update_icon_opacity(0.0)  # Fully transparent
+                    if self.is_gif_playing:
+                        self.is_gif_playing = False
+                        self.stop_gif_at_first_frame()  # Stop GIF and show first frame
+
             time.sleep(0.3)  # Adjust the sleep time as needed
+
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""
@@ -294,10 +320,10 @@ class PhotoFrameApp:
         Args:
             image_file_name (str): The file name of the image to be displayed.
         """
-
         image_url = BASE_URL + image_file_name  # Construct the full URL
+        
         try:
-            response = requests.get(image_file_name)
+            response = requests.get(image_url)
             response.raise_for_status()
             image_data = BytesIO(response.content)
             image = Image.open(image_data)
@@ -325,13 +351,16 @@ class PhotoFrameApp:
         """
         frames = []
         try:
-            for frame in ImageSequence.Iterator(image):
-                frame = frame.copy()
-                frame = frame.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
-                frames.append(ImageTk.PhotoImage(frame))
+            if not self.gif_frames:
+                for frame in ImageSequence.Iterator(image):
+                    frame = frame.copy()
+                    frame = frame.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
+                    frames.append(ImageTk.PhotoImage(frame))
         except Exception as e:
-            print(f"Error processing GIF frames: {str(e)}")
-            return
+                print(f"Error processing GIF frames: {str(e)}")
+                return
+
+                    
 
         def update_frame(frame_num=0):
             if frame_num < len(frames):
@@ -384,8 +413,12 @@ class PhotoFrameApp:
         """Quit the application and close all child windows."""
         # Close all child windows
         for child in self.child_windows:
-            if child.winfo_exists():    
+            if child.winfo_exists():
                 child.destroy()
+    
+        # Cleanup GPIO pins
+        GPIO.cleanup()
+
         # Close the main window
         self.root.quit()
 

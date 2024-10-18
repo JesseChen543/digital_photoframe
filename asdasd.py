@@ -54,9 +54,9 @@ class PhotoFrameApp:
         self.story = None
 
         # GPIO setup for LEDs
-        self.LED_RED = 5    # GPIO pin for Red LED
-        self.LED_YELLOW = 6  # GPIO pin for Yellow LED
-        self.LED_GREEN = 13  # GPIO pin for Green LED
+        self.LED_RED = 12    # GPIO pin for Red LED
+        self.LED_YELLOW = 16  # GPIO pin for Yellow LED
+        self.LED_GREEN = 26  # GPIO pin for Green LED
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.LED_RED, GPIO.OUT)
@@ -302,7 +302,7 @@ class PhotoFrameApp:
                         photo_data = response.json()
 
                         if photo_data and isinstance(photo_data, list) and len(photo_data) > 0:
-                            photo_url = photo_data[0]['url']
+                            photo_url = photo_data[0]['filename']
                             time_difference = end_time - current_time
                             print(f"Event ID: {event_id}, Start Time: {start_time}, End Time: {end_time}, Time Difference: {time_difference}, Photo URL: {photo_url}")
                             
@@ -337,7 +337,7 @@ class PhotoFrameApp:
                         response.raise_for_status()
                         fallback_data = response.json()
                         if fallback_data and isinstance(fallback_data, list) and len(fallback_data) > 0:
-                            fallback_photo = fallback_data[0]['url']
+                            fallback_photo = fallback_data[0]['filename']
                             print(f"Fallback Photo URL: {fallback_photo}")
                             self.load_and_display_image(fallback_photo)
                         else:

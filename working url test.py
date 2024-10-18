@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 import tkinter as tk
-from round_button import CanvasButton
+from round_button_test import CanvasButton
 from PIL import Image, ImageTk
 from datetime import datetime, timedelta
 from AddNotePopup import AddNotePopup
