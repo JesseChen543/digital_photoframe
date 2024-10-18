@@ -206,6 +206,7 @@ class ViewSchedulePopup:
         Add a schedule item to the scrollable frame.
 
         Args:
+            event_id (int): The unique identifier of the event.
             title (str): The title of the event.
             start_time (str): The start time of the event.
             end_time (str): The end time of the event.
@@ -223,6 +224,7 @@ class ViewSchedulePopup:
             borderwidth=1,
             relief="solid"
         )
+        item_frame.event_id = event_id  # Store the event_id
         item_frame.pack(fill="x", padx=10, pady=5)
         item_frame.pack_propagate(False)  # Prevent the frame from resizing based on its content
 
@@ -355,9 +357,14 @@ class ViewSchedulePopup:
         print(f"Attendees: {self.user_events[event_id]['attendees']}")
 
         attendees = self.user_events[event_id]['attendees']
-        if icon_url in attendees.values():
+        user_id = self.get_user_id_from_icon(icon_url)
+
+        if user_id is None:
+            print(f"Could not find user ID for icon: {icon_url}")
+            return
+
+        if user_id in attendees:
             # This is an attending family member, remove them from the event
-            user_id = next(uid for uid, icon in attendees.items() if icon == icon_url)
             success = self._remove_user_from_event(event_id, user_id)
             
             if success:
@@ -373,31 +380,29 @@ class ViewSchedulePopup:
                 
                 print(f"Removed user {user_id} with icon {icon_url} from event {event_id}")
             else:
-                print(f"Failed to remove user with icon {icon_url} from event {event_id}")
+                print(f"Failed to remove user {user_id} with icon {icon_url} from event {event_id}")
         else:
             # This is a non-attending family member, add them to the event
-            user_id = self.get_user_id_from_icon(icon_url)
+            success = self._add_user_to_event(event_id, user_id)
+            
+            if success:
+                # Update the icon with green tick
+                img = Image.open(BytesIO(requests.get(icon_url).content))
+                img = img.resize((20, 20), Image.LANCZOS)
+                img = self._add_green_tick(img)
+                photo = ImageTk.PhotoImage(img)
+                event.widget.configure(image=photo)
+                event.widget.image = photo  # Keep a reference
 
-            if user_id is not None:
-                success = self._add_user_to_event(event_id, user_id)
+                # Add the attendee info to the event's attendees dict
+                self.user_events[event_id]['attendees'][user_id] = icon_url
                 
-                if success:
-                    # Update the icon with green tick
-                    img = Image.open(BytesIO(requests.get(icon_url).content))
-                    img = img.resize((20, 20), Image.LANCZOS)
-                    img = self._add_green_tick(img)
-                    photo = ImageTk.PhotoImage(img)
-                    event.widget.configure(image=photo)
-                    event.widget.image = photo  # Keep a reference
-
-                    # Add the attendee info to the event's attendees dict
-                    self.user_events[event_id]['attendees'][user_id] = icon_url
-                    
-                    print(f"Added user {user_id} with icon {icon_url} to event {event_id}")
-                else:
-                    print(f"Failed to add user with icon {icon_url} to event {event_id}")
+                print(f"Added user {user_id} with icon {icon_url} to event {event_id}")
             else:
-                print(f"Could not find user ID for icon: {icon_url}")
+                print(f"Failed to add user {user_id} with icon {icon_url} to event {event_id}")
+
+        # Refresh the display of family icons
+        self._refresh_family_icons(event_id)
 
     def _remove_user_from_event(self, event_id, attending_user):
         """Remove user from the event in the database."""
@@ -521,6 +526,31 @@ class ViewSchedulePopup:
             print(f"Error parsing user JSON: {e}")
         
         return None
+
+    def _refresh_family_icons(self, event_id):
+        """Refresh the display of family icons for a specific event."""
+        # Find the item frame for this event
+        for widget in self.scrollable_frame.winfo_children():
+            if isinstance(widget, tk.Frame) and hasattr(widget, 'event_id') and widget.event_id == event_id:
+                item_frame = widget
+                break
+        else:
+            print(f"Could not find item frame for event {event_id}")
+            return
+
+        # Clear existing family icons
+        for widget in item_frame.winfo_children():
+            if isinstance(widget, tk.Frame) and widget.winfo_class() == 'Frame':
+                attendees_frame = widget
+                for icon in attendees_frame.winfo_children():
+                    icon.destroy()
+                break
+        else:
+            print(f"Could not find attendees frame for event {event_id}")
+            return
+
+        # Re-add family icons with updated attendance status
+        self._add_family_icons(item_frame, self.user_events[event_id]['family_icons'], self.user_events[event_id]['attendees'], event_id)
 
 if __name__ == "__main__":
     root = tk.Tk()
