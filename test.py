@@ -110,11 +110,12 @@ try:
             self.current_event = None
             self.update_current_event()
 
-            # GPIO setup for LEDs
+            # Add LED pin definitions
             self.LED_RED = 12    # GPIO pin for Red LED
             self.LED_YELLOW = 16  # GPIO pin for Yellow LED
             self.LED_GREEN = 26  # GPIO pin for Green LED
 
+            # GPIO setup for LEDs
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.LED_RED, GPIO.OUT)
             GPIO.setup(self.LED_YELLOW, GPIO.OUT)
