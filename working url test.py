@@ -264,23 +264,29 @@ class PhotoFrameApp:
         except Exception as e:
             self.display_error(f"An unexpected error occurred while fetching user events: {str(e)}")
 
-    def load_and_display_image(self, image_url):
+    def load_and_display_image(self, image_file_name):
         """
-        Load and display an image from a given URL.
+        Load and display an image from a given file name.
+        Supports both static images and animated GIFs.
 
         Args:
-            image_url (str): The URL of the image to be displayed.
+            image_file_name (str): The file name of the image to be displayed.
         """
+        image_url = BASE_URL + image_file_name  
         try:
             response = requests.get(image_url)
             response.raise_for_status()
             image_data = BytesIO(response.content)
-            image = Image.open(image_data)  # Open the image
-            image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)  # Resize
-            bg_image = ImageTk.PhotoImage(image)
+            image = Image.open(image_data)
 
-            self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
-            self.canvas.bg_image = bg_image
+            if image.format == 'GIF' and image.is_animated:
+                self.animate_gif(image)
+            else:
+                # Handle static images as before
+                image = image.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
+                bg_image = ImageTk.PhotoImage(image)
+                self.canvas.create_image(0, 0, anchor='nw', image=bg_image)
+                self.canvas.bg_image = bg_image
 
             # Add buttons after the image is loaded
             self.add_buttons()
