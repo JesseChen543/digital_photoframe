@@ -1,28 +1,26 @@
-import RPi.GPIO as GPIO
-import time
+#[1] "Load data from php file into python," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/69581729/load-data-from-php-file-into-python. [Accessed: 08-Oct-2024].
+#[2] "Customizing Your Tkinter App's Windows," Python GUIs. [Online]. Available: https://www.pythonguis.com/tutorials/customized-windows-tkinter/. [Accessed: 09-Oct-2024].
+#[3] "How to delete and recreate a canvas? (Tkinter / Canvas)," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/63251775/how-to-delete-and-recreate-a-canvas-tkinter-canvas. [Accessed: 10-Mar-2024].
+#[4] "datetime — Basic date and time types," Python Documentation. [Online]. Available: https://docs.python.org/3/library/datetime.html. [Accessed: 11-Oct-2024].
+#[5] "When to use raise_for_status vs status_code testing," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/61463224/when-to-use-raise-for-status-vs-status-code-testing. [Accessed: 11-Oct-2024].
+#[6] "Tkinter - how to resize frame," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/68270730/tkinter-how-to-resize-frame. [Accessed: 11-Oct-2024].
+#[7] "Programmatically generate video or animated GIF in Python?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/753190/programmatically-generate-video-or-animated-gif-in-python. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
-from round_button_test import CanvasButton
+from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
-from datetime import datetime, timedelta
-from AddNotePopup import AddNotePopup
+from datetime import datetime
+from AddNotePopup import AddNotePopup 
 from ViewNotePopup import ViewNotePopup
 from Upcoming_schedule import ViewSchedulePopup
 from utils import center_window_parent
 import requests  
 from io import BytesIO  
+from datetime import datetime, timedelta
+from constant import *
+import time
 import threading
-from constant import * 
-
-# GPIO Mode (BOARD / BCM)
-GPIO.setmode(GPIO.BCM)
-
-# Set GPIO pins
-TRIG = 17  # GPIO pin 17 for TRIG
-ECHO = 27  # GPIO pin 27 for ECHO
-
-# Set the TRIG and ECHO pins as output and input
-GPIO.setup(TRIG, GPIO.OUT)
-GPIO.setup(ECHO, GPIO.IN)
+import RPi.GPIO as GPIO
 
 class PhotoFrameApp:
     """
@@ -40,8 +38,7 @@ class PhotoFrameApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
-        self.root.title("Image Display with Clickable Icon")
-
+        
         # Remove window decorations
         self.root.overrideredirect(True)
         
@@ -51,7 +48,7 @@ class PhotoFrameApp:
         # Initialize list to keep track of child windows
         self.child_windows = []
 
-        # Initialize frame_id 
+        # Initialize frame_id (assuming it's always 1 for now)
         self.frame_id = 1
 
         # Get user_id and other user info from database based on frame_id
@@ -60,25 +57,6 @@ class PhotoFrameApp:
             # Handle the case where user_id couldn't be fetched
             self.display_error("Failed to fetch user information")
             return
-
-        # Initialize saved inputs
-        self.saved_notes = []
-
-        # Initialize buttons 
-        self.view_note_button = None  
-        self.view_schedule_button = None
-        self.add_note_button = None
-
-        self.current_date = datetime.now().strftime("%d/%m/%Y")
-
-        # Initialize popup windows
-        self.add_note_popup = AddNotePopup(self.root, self)
-        self.view_note_popup = ViewNotePopup(self.root, self)
-        self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
-        
-        # Create canvas
-        self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
 
         # Initialize story property
         self.story = None
@@ -95,11 +73,27 @@ class PhotoFrameApp:
         # Now it's safe to call update_current_event
         self.update_current_event()
 
+        # Initialize saved inputs
+        self.saved_notes = []
+
+        # Initialize buttons 
+        self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
+
+        self.current_date = datetime.now().strftime("%d/%m/%Y")
+
+        # Initialize popup windows
+        self.add_note_popup = AddNotePopup(self.root, self)
+        self.view_note_popup = ViewNotePopup(self.root, self)
+        self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
+        
+        # Create canvas
+        self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+
         # Fetch and display the image
         self.fetch_and_display_image()
-
-        # Center the window on the screen
-        center_window_parent(self.root, SCREEN_WIDTH, SCREEN_HEIGHT)
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
@@ -115,60 +109,6 @@ class PhotoFrameApp:
         # Start the periodic update thread
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
-
-        # Print screen dimensions for debugging
-        print(f"Screen dimensions: {self.screen_width}x{self.screen_height}")
-
-    def measure_distance(self):
-        """Measure the distance using the ultrasonic sensor."""
-        try:
-            GPIO.output(TRIG, False)
-            time.sleep(0.1)  # Reduced sleep time
-
-            GPIO.output(TRIG, True)
-            time.sleep(0.00001)
-            GPIO.output(TRIG, False)
-
-            pulse_start = time.time()
-            timeout = pulse_start + 0.1  # Set a timeout
-            while GPIO.input(ECHO) == 0 and time.time() < timeout:
-                pulse_start = time.time()
-
-            pulse_end = time.time()
-            timeout = pulse_end + 0.1  # Set a timeout
-            while GPIO.input(ECHO) == 1 and time.time() < timeout:
-                pulse_end = time.time()
-
-            pulse_duration = pulse_end - pulse_start
-            distance = pulse_duration * 17150
-            return round(distance, 2)
-        except Exception as e:
-            print(f"Error measuring distance: {str(e)}")
-            return None
-
-    def distance_monitor(self):
-        """Continuously monitor the distance and update icon opacity."""
-        while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                # print(f"Distance: {distance} cm")  # Comment out for less console output
-                if distance <= 45:
-                    self.root.after(0, self.update_icon_opacity, 1.0)
-                else:
-                    self.root.after(0, self.update_icon_opacity, 0.0)
-            time.sleep(0.5)  # Increased sleep time
-
-    def update_icon_opacity(self, opacity):
-        """Update the opacity of the icons on the canvas."""
-        try:
-            if self.add_note_button:
-                self.add_note_button.set_opacity(opacity)
-            if self.view_schedule_button:
-                self.view_schedule_button.set_opacity(opacity)
-            if self.view_note_button:
-                self.view_note_button.set_opacity(opacity)
-        except Exception as e:
-            print(f"Error updating icon opacity: {str(e)}")
 
     def get_user_id(self, frame_id):
         """
@@ -207,7 +147,7 @@ class PhotoFrameApp:
 
     def fetch_user_events(self):
         """Fetch user events and set the story property."""
-        print("\n--- Fetching user events ---")
+        print("\n--- Fetching user events ---")  # New print statement
         special_user_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/special_user.php?special_user={self.user_id}"
         
         try:
@@ -248,7 +188,7 @@ class PhotoFrameApp:
                 print(f"Error during periodic update: {str(e)}")
             finally:
                 print(f"Waiting 60 seconds before next update...")
-                time.sleep(60)  # Wait for 60 seconds before the next update
+                time.sleep(10)  # Wait for 10 seconds before the next update
 
     def fetch_and_display_image(self):
         """
@@ -320,6 +260,7 @@ class PhotoFrameApp:
                     print(f"Time Difference: {smallest_time_difference}")
                     print(f"Photo URL: {event_photo}")
                     self.load_and_display_image(event_photo)
+                # if no photo together with the attendee, use the solo photo of the user
                 else:
                     print("\nNo suitable future event photo found. Using fallback URL.")
                     try:
@@ -470,8 +411,7 @@ class PhotoFrameApp:
             )
 
     def quit_app(self, event=None):
-        """Quit the application and clean up GPIO."""
-        GPIO.cleanup()  # Cleanup GPIO on exit
+        """Quit the application and close all child windows."""
         # Close all child windows
         for child in self.child_windows:
             if child.winfo_exists():
@@ -487,9 +427,55 @@ class PhotoFrameApp:
         """Unregister a child window."""
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
+    def measure_distance(self):
+        """Measure the distance using the ultrasonic sensor."""
+        GPIO.output(TRIG, False)
+        time.sleep(2)
+
+        GPIO.output(TRIG, True)
+        time.sleep(0.00001)
+        GPIO.output(TRIG, False)
+
+        pulse_start = time.time()
+        while GPIO.input(ECHO) == 0:
+            pulse_start = time.time()
+
+        pulse_end = time.time()
+        while GPIO.input(ECHO) == 1:
+            pulse_end = time.time()
+
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 17150
+        return round(distance, 2)
+
+    def distance_monitor(self):
+        """Continuously monitor the distance and update icon opacity."""
+        while True:
+            distance = self.measure_distance()
+            if distance is not None:
+                print(f"Distance: {distance} cm")
+                # Update icon opacity based on distance
+                if distance <= 45:
+                    self.update_icon_opacity(1.0)  # Fully opaque
+                else:
+                    self.update_icon_opacity(0.0)  # Fully transparent
+            time.sleep(0.3)  # Adjust the sleep time as needed
+
+    def update_icon_opacity(self, opacity):
+        """Update the opacity of the icons on the canvas."""
+        print(f"Updating icon opacity to: {opacity}")  # Debugging output
+        # Temporarily comment out the opacity update logic
+        # if self.add_note_button:
+        #     self.add_note_button.set_opacity(opacity)  # Placeholder function
+        # if self.view_schedule_button:
+        #     self.view_schedule_button.set_opacity(opacity)  # Placeholder function
+        # if self.view_note_button:
+        #     self.view_note_button.set_opacity(opacity)  # Placeholder function
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.overrideredirect(True)  # Remove window decorations
     root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
-    root.mainloop()
+    root.mainloop()  # Make sure this line is here
