@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 import tkinter as tk
+from tkinter import ttk
 from round_button_test import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime, timedelta
@@ -12,7 +13,6 @@ import requests
 from io import BytesIO  
 import threading
 from constant import * 
-import tkinter.ttk as ttk
 
 # GPIO Mode (BOARD / BCM)
 GPIO.setmode(GPIO.BCM)
@@ -47,11 +47,14 @@ class PhotoFrameApp:
         self.root.attributes('-fullscreen', True)
         self.root.config(cursor="none")  # Hide the mouse cursor
 
-        # Get screen width and height
-        self.screen_width = self.root.winfo_screenwidth()
-        self.screen_height = self.root.winfo_screenheight()
+        # Force the window to update its geometry
+        self.root.update_idletasks()
 
-        # Set window size to screen size
+        # Get actual window size after going fullscreen
+        self.screen_width = self.root.winfo_width()
+        self.screen_height = self.root.winfo_height()
+
+        # Ensure the window is at (0,0)
         self.root.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
 
         # Create a style
@@ -60,17 +63,20 @@ class PhotoFrameApp:
 
         # Create main frame
         self.main_frame = ttk.Frame(self.root, style='TFrame')
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        self.main_frame.place(x=0, y=0, width=self.screen_width, height=self.screen_height)
 
         # Create canvas
         self.canvas = tk.Canvas(self.main_frame, width=self.screen_width, height=self.screen_height, 
                                 bd=0, highlightthickness=0, bg='black')
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.place(x=0, y=0)
+
+        # Print screen dimensions for debugging
+        print(f"Screen dimensions: {self.screen_width}x{self.screen_height}")
 
         # Initialize list to keep track of child windows
         self.child_windows = []
 
-        # Initialize frame_id (assuming it's always 1 for now)
+        # Initialize frame_id 
         self.frame_id = 1
 
         # Get user_id and other user info from database based on frame_id
@@ -505,6 +511,12 @@ class PhotoFrameApp:
 
     def toggle_fullscreen(self, event=None):
         self.root.attributes('-fullscreen', not self.root.attributes('-fullscreen'))
+        self.root.update_idletasks()
+        self.screen_width = self.root.winfo_width()
+        self.screen_height = self.root.winfo_height()
+        self.main_frame.place(x=0, y=0, width=self.screen_width, height=self.screen_height)
+        self.canvas.config(width=self.screen_width, height=self.screen_height)
+        print(f"New dimensions: {self.screen_width}x{self.screen_height}")
 
     def quit_fullscreen(self, event=None):
         if self.root.attributes('-fullscreen'):
@@ -514,5 +526,7 @@ class PhotoFrameApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.overrideredirect(True)  # Remove window decorations
+    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
