@@ -25,7 +25,7 @@ import traceback
 import os
 
 # Define the path for the error log
-log_path = '/home/pi/Desktop/digital_photoframe/digital_photofram/error_log.txt'
+log_path = '/home/pi/Desktop/digital_photoframe/digital_photoframe/error_log.txt'
 
 def log_error(error_message):
     # Ensure the directory exists
