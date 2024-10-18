@@ -221,11 +221,6 @@ class PhotoFrameApp:
             for event in user_events:
                 if event['story']:
                     self.story = event['story']
-
-                if event['status']:
-                    user_status = event['status']
-                    
-                if self.story and user_status:
                     break
 
             if self.story:
