@@ -493,7 +493,8 @@ class PhotoFrameApp:
                 if distance is not None:
                     print(f"Distance: {distance} cm")
                     # Update icon opacity based on distance
-                    if distance <= 45:
+                    # if distance <= 45:
+                    if True
                         self.update_icon_opacity(1.0)  # Fully opaque
                     else:
                         self.update_icon_opacity(0.0)  # Fully transparent
