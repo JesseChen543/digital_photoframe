@@ -222,7 +222,7 @@ class PhotoFrameApp:
 
         try:
             # Use the story URL if available, otherwise proceed with existing logic
-            if self.story:
+            if self.story and False:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
             else:
