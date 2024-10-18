@@ -21,4 +21,4 @@ Insync Photoframe is a python-based digital photoframe application that is desig
 1. **Install Dependencies:** Ensure Python is installed, then install the required Python libraries using `pip`:
 
 ```bash
-sudo pip install RPi.GPIO Pillow requests
+sudo apt-get install python3-rpi.gpio
