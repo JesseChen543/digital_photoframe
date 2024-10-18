@@ -22,14 +22,19 @@ import RPi.GPIO as GPIO
 import threading
 import sys
 import traceback
+import os
 
+# Define the path for the error log
+log_path = '/home/pi/Desktop/digital_photoframe/digital_photofram/error_log.txt'
 
 def log_error(error_message):
-    with open('error_log.txt', 'a') as f:
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    with open(log_path, 'a') as f:
         f.write(f"{datetime.now()}: {error_message}\n")
 
-# Redirect stderr to the log file
-sys.stderr = open('error_log.txt', 'a')
+# At the beginning of your main code
+print(f"Error log will be written to: {log_path}")
 
 try:
     class PhotoFrameApp:
@@ -536,4 +541,4 @@ try:
 except Exception as e:
     error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
     log_error(error_message)
-    print(error_message)
+    print(f"An error occurred. Check the log file at: {log_path}")
