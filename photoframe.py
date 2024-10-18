@@ -22,6 +22,28 @@ import time
 import threading
 import RPi.GPIO as GPIO
 
+
+class CanvasButton:
+    def __init__(self, canvas, x, y, image_path, command):
+        self.canvas = canvas
+        self.x = x
+        self.y = y
+        self.image = Image.open(image_path)
+        self.photo_image = ImageTk.PhotoImage(self.image)
+        self.button = self.canvas.create_image(x, y, image=self.photo_image, anchor='nw')
+        self.canvas.tag_bind(self.button, '<Button-1>', lambda event: command())
+        self.opacity = 1.0
+
+    def set_opacity(self, opacity):
+        self.opacity = opacity
+        # Create a new image with the desired opacity
+        image = self.image.copy()
+        alpha = image.split()[3]
+        alpha = alpha.point(lambda p: int(p * opacity))
+        image.putalpha(alpha)
+        self.photo_image = ImageTk.PhotoImage(image)
+        self.canvas.itemconfig(self.button, image=self.photo_image)
+        
 class PhotoFrameApp:
     """
     A class representing the main photo frame application.
