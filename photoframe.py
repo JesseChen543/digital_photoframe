@@ -137,9 +137,6 @@ class PhotoFrameApp:
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
 
-        # Create distance display window
-        self.distance_window = self.create_distance_window()
-
     def get_user_id(self, frame_id):
         """
         Fetch user information from the database based on frame_id.
@@ -490,34 +487,14 @@ class PhotoFrameApp:
         distance = pulse_duration * 17150
         return round(distance, 2)
 
-    def create_distance_window(self):
-        """Create a new window to display the distance."""
-        distance_window = tk.Toplevel(self.root)
-        distance_window.title("Distance Monitor")
-        distance_window.geometry("200x100")
-        
-        self.distance_label = tk.Label(distance_window, text="Distance: N/A", font=("Arial", 16))
-        self.distance_label.pack(expand=True)
-
-        return distance_window
-
-    def update_distance_display(self, distance):
-        """Update the distance display in the separate window."""
-        if self.distance_window.winfo_exists():
-            self.distance_label.config(text=f"Distance: {distance:.2f} cm")
-        else:
-            # Recreate the window if it was closed
-            self.distance_window = self.create_distance_window()
-
     def distance_monitor(self):
         """Continuously monitor the distance and update icon opacity."""
         while True:
             try:
                 distance = self.measure_distance()
+                print(distance)
                 if distance is not None:
                     print(f"Distance: {distance} cm")
-                    # Update the distance display
-                    self.root.after(0, self.update_distance_display, distance)
                     # Update icon opacity based on distance
                     if distance <= 45:
                         self.update_icon_opacity(1.0)  # Fully opaque
@@ -533,6 +510,7 @@ class PhotoFrameApp:
         """Update the opacity of the icons on the canvas."""
         print(f"Updating icon opacity to: {opacity}")  # Debugging output
         buttons = [self.add_note_button, self.view_schedule_button, self.view_note_button]
+        button.set_opacity(opacity)
         for button in buttons:
             if button:
                 try:
