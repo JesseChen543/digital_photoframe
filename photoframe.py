@@ -451,26 +451,34 @@ class PhotoFrameApp:
     def distance_monitor(self):
         """Continuously monitor the distance and update icon opacity."""
         while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                print(f"Distance: {distance} cm")
-                # Update icon opacity based on distance
-                if distance <= 45:
-                    self.update_icon_opacity(1.0)  # Fully opaque
-                else:
-                    self.update_icon_opacity(0.0)  # Fully transparent
-            time.sleep(0.3)  # Adjust the sleep time as needed
+            try:
+                distance = self.measure_distance()
+                if distance is not None:
+                    print(f"Distance: {distance} cm")
+                    # Update icon opacity based on distance
+                    if distance <= 45:
+                        self.update_icon_opacity(1.0)  # Fully opaque
+                    else:
+                        self.update_icon_opacity(0.0)  # Fully transparent
+                time.sleep(0.3)  # Adjust the sleep time as needed
+            except Exception as e:
+                print(f"Error in distance_monitor: {str(e)}")
+                time.sleep(1)  # Wait a bit longer if there's an error
 
     def update_icon_opacity(self, opacity):
         """Update the opacity of the icons on the canvas."""
         print(f"Updating icon opacity to: {opacity}")  # Debugging output
-        # Temporarily comment out the opacity update logic
-        # if self.add_note_button:
-        #     self.add_note_button.set_opacity(opacity)  # Placeholder function
-        # if self.view_schedule_button:
-        #     self.view_schedule_button.set_opacity(opacity)  # Placeholder function
-        # if self.view_note_button:
-        #     self.view_note_button.set_opacity(opacity)  # Placeholder function
+        buttons = [self.add_note_button, self.view_schedule_button, self.view_note_button]
+        for button in buttons:
+            if button:
+                try:
+                    button.set_opacity(opacity)
+                    print(f"Updated opacity for button at ({button.x}, {button.y})")
+                except Exception as e:
+                    print(f"Error updating opacity for button at ({button.x}, {button.y}): {str(e)}")
+        
+        # Force update of the canvas
+        self.canvas.update_idletasks()
 
 
 if __name__ == "__main__":
