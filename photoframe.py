@@ -490,6 +490,7 @@ class PhotoFrameApp:
     def distance_monitor(self):
         """Continuously monitor the distance and update icon opacity."""
         while True:
+            self.update_icon_opacity(1.0)
             try:
                 distance = self.measure_distance()
                 print(distance)
