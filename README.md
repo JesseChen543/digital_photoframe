@@ -3,11 +3,6 @@
 Insync Photoframe is a python-based digital photoframe application that turns your Raspberry Pi into an interactive photo frame and is designed with features such as adding notes, viewing schedules, and an LED-based status indicator. It also comes with a ultrasonic sensor to interactively respond to proximity
 
 ## Prerequisites
-Before installing the application, ensure you have the following
-   - Raspberry Pi with GPIO access
-   - Ultrasonic sensor (HC-SR04)
-   - RPG LEDs
-   - Internet connection
 1. #### Hardware Requirement:
       - Raspberry Pi with GPIO access
       - Ultrasonic sensor (HC-SR04)
