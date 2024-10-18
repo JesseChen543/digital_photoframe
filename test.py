@@ -484,9 +484,3 @@ if __name__ == "__main__":
     root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
     root.mainloop()
-    root = tk.Tk()
-    root.overrideredirect(True)  # Remove window decorations
-    root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
-    app = PhotoFrameApp(root)
-    root.mainloop()
->>>>>>> 574157b94dcc33152feae622a93e4d9093a9a0f4
