@@ -30,12 +30,12 @@ git clone <https://github.com/JesseChen543/digital_photoframe.git>
 cd digital_photoframe
 ```
 
-# 2. Install Required Dependencies: 
+### 2. Install Required Dependencies: 
 Install the necessary Python libraries (RPi.GPIO, Pillow, requests)
 ```bash
 sudo pip install Rpi.GPIO Pillow requests
 ```
-# 3. Wiring Setup
+### 3. Wiring Setup
  - Connect the ultrasonic sensor to GPIO pins 17 (TRIG) and 27 (ECHO)
  - Connect the RGB LED to GPIO pins 12 (Red), 16 (Yellow), and 26 (Green).
 
