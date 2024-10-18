@@ -108,59 +108,59 @@ class PhotoFrameApp:
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
         # Start the distance measuring thread
-        self.distance_thread = threading.Thread(target=self.distance_monitor)
-        self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
-        self.distance_thread.start()
+        # self.distance_thread = threading.Thread(target=self.distance_monitor)
+        # self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
+        # self.distance_thread.start()
 
         # Start the periodic update thread
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
 
-    def measure_distance(self):
-        """Measure the distance using the ultrasonic sensor."""
-        GPIO.output(TRIG, False)
-        time.sleep(2)
+    # def measure_distance(self):
+    #     """Measure the distance using the ultrasonic sensor."""
+    #     GPIO.output(TRIG, False)
+    #     time.sleep(2)
 
-        GPIO.output(TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(TRIG, False)
+    #     GPIO.output(TRIG, True)
+    #     time.sleep(0.00001)
+    #     GPIO.output(TRIG, False)
 
-        pulse_start = time.time()
-        while GPIO.input(ECHO) == 0:
-            pulse_start = time.time()
+    #     pulse_start = time.time()
+    #     while GPIO.input(ECHO) == 0:
+    #         pulse_start = time.time()
 
-        pulse_end = time.time()
-        while GPIO.input(ECHO) == 1:
-            pulse_end = time.time()
+    #     pulse_end = time.time()
+    #     while GPIO.input(ECHO) == 1:
+    #         pulse_end = time.time()
 
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
-        return round(distance, 2)
+    #     pulse_duration = pulse_end - pulse_start
+    #     distance = pulse_duration * 17150
+    #     return round(distance, 2)
 
-    def distance_monitor(self):
-        """Continuously monitor the distance and update icon opacity."""
-        while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                print(f"Distance: {distance} cm")
-                # Update icon opacity based on distance
-                if distance <= 45:
-                    self.update_icon_opacity(1.0)  # Fully opaque
-                else:
-                    self.update_icon_opacity(0.0)  # Fully transparent
-            time.sleep(0.3)  # Adjust the sleep time as needed
+    # def distance_monitor(self):
+    #     """Continuously monitor the distance and update icon opacity."""
+    #     while True:
+    #         distance = self.measure_distance()
+    #         if distance is not None:
+    #             print(f"Distance: {distance} cm")
+    #             # Update icon opacity based on distance
+    #             if distance <= 45:
+    #                 self.update_icon_opacity(1.0)  # Fully opaque
+    #             else:
+    #                 self.update_icon_opacity(0.0)  # Fully transparent
+    #         time.sleep(0.3)  # Adjust the sleep time as needed
 
-    def update_icon_opacity(self, opacity):
-        """Update the opacity of the icons on the canvas."""
-        # You can adjust the opacity by changing the alpha channel of the images.
-        # Note: Actual implementation will depend on how you have defined and handled the icons.
-        # Here, we'll assume you can change their opacity based on some logic.
-        if self.add_note_button:
-            self.add_note_button.set_opacity(opacity)  # Placeholder function
-        if self.view_schedule_button:
-            self.view_schedule_button.set_opacity(opacity)  # Placeholder function
-        if self.view_note_button:
-            self.view_note_button.set_opacity(opacity)  # Placeholder function
+    # def update_icon_opacity(self, opacity):
+    #     """Update the opacity of the icons on the canvas."""
+    #     # You can adjust the opacity by changing the alpha channel of the images.
+    #     # Note: Actual implementation will depend on how you have defined and handled the icons.
+    #     # Here, we'll assume you can change their opacity based on some logic.
+    #     if self.add_note_button:
+    #         self.add_note_button.set_opacity(opacity)  # Placeholder function
+    #     if self.view_schedule_button:
+    #         self.view_schedule_button.set_opacity(opacity)  # Placeholder function
+    #     if self.view_note_button:
+    #         self.view_note_button.set_opacity(opacity)  # Placeholder function
 
     def get_user_id(self, frame_id):
         """
