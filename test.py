@@ -1,4 +1,11 @@
-import RPi.GPIO as GPIO
+#[1] "Load data from php file into python," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/69581729/load-data-from-php-file-into-python. [Accessed: 08-Oct-2024].
+#[2] "Customizing Your Tkinter App's Windows," Python GUIs. [Online]. Available: https://www.pythonguis.com/tutorials/customized-windows-tkinter/. [Accessed: 09-Oct-2024].
+#[3] "How to delete and recreate a canvas? (Tkinter / Canvas)," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/63251775/how-to-delete-and-recreate-a-canvas-tkinter-canvas. [Accessed: 10-Mar-2024].
+#[4] "datetime — Basic date and time types," Python Documentation. [Online]. Available: https://docs.python.org/3/library/datetime.html. [Accessed: 11-Oct-2024].
+#[5] "When to use raise_for_status vs status_code testing," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/61463224/when-to-use-raise-for-status-vs-status-code-testing. [Accessed: 11-Oct-2024].
+#[6] "Tkinter - how to resize frame," Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/68270730/tkinter-how-to-resize-frame. [Accessed: 11-Oct-2024].
+#[7] "Programmatically generate video or animated GIF in Python?" Stack Overflow. [Online]. Available: https://stackoverflow.com/questions/753190/programmatically-generate-video-or-animated-gif-in-python. [Accessed: 11-Oct-2024].
+
 import tkinter as tk
 from round_button import CanvasButton
 from PIL import Image, ImageTk, ImageSequence
@@ -12,6 +19,7 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from constant import *
 import time
+import RPi.GPIO as GPIO
 import threading
 
 class PhotoFrameApp:
@@ -52,6 +60,40 @@ class PhotoFrameApp:
 
         # Initialize story property
         self.story = None
+        
+        # Fetch user events and set the story
+        self.fetch_user_events()
+
+        # Initialize saved inputs
+        self.saved_notes = []
+
+        # Initialize buttons 
+        self.add_note_button = None
+        self.view_schedule_button = None
+        self.view_note_button = None
+
+        self.current_date = datetime.now().strftime("%d/%m/%Y")
+
+        # Initialize popup windows
+        self.add_note_popup = AddNotePopup(self.root, self)
+        self.view_note_popup = ViewNotePopup(self.root, self)
+        self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
+        
+        # Create canvas
+        self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+
+        # Fetch and display the image
+        self.fetch_and_display_image()
+        
+        # Bind the Escape key to quit the application
+        self.root.bind('<Escape>', self.quit_app)
+
+        # Bind the closing event
+        self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
+
+        self.current_event = None
+        self.update_current_event()
 
         # GPIO setup for LEDs
         self.LED_RED = 12    # GPIO pin for Red LED
@@ -68,22 +110,7 @@ class PhotoFrameApp:
         GPIO.output(self.LED_YELLOW, GPIO.LOW)
         GPIO.output(self.LED_GREEN, GPIO.LOW)
 
-        # Initialize saved inputs
-        self.saved_notes = []
-
-        # Initialize buttons 
-        self.add_note_button = None
-        self.view_schedule_button = None
-        self.view_note_button = None
-
-        self.current_date = datetime.now().strftime("%d/%m/%Y")
-
-        # Initialize popup windows
-        self.add_note_popup = AddNotePopup(self.root, self)
-        self.view_note_popup = ViewNotePopup(self.root, self)
-        self.view_schedule_popup = ViewSchedulePopup(self.root, self, self.user_id)
-
-        # Set GPIO pins
+        # Set GPIO pins for ultrasonic sensor
         self.TRIG = 17
         self.ECHO = 27
 
@@ -91,86 +118,11 @@ class PhotoFrameApp:
         GPIO.setup(self.TRIG, GPIO.OUT)
         GPIO.setup(self.ECHO, GPIO.IN)
 
-        # Create canvas
-        self.canvas = tk.Canvas(self.root, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, bd=0, highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
-
-        # Fetch and display the image
-        self.fetch_and_display_image()
-
-        # Fetch user events and set the story
-        self.fetch_user_events()
-
         self.is_gif_playing = False  # Initialize GIF playing state
         self.gif_animation_id = None  # Initialize GIF animation ID
-        
-        # Bind the Escape key to quit the application
-        self.root.bind('<Escape>', self.quit_app)
 
-        # Bind the closing event
-        self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
-
+        # Start the distance monitoring thread
         threading.Thread(target=self.distance_monitor, daemon=True).start()
-
-    def measure_distance(self):
-        """Measure the distance using the ultrasonic sensor."""
-        GPIO.output(self.TRIG, False)
-        time.sleep(0.2)
-
-        GPIO.output(self.TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(self.TRIG, False)
-
-        pulse_start = time.time()
-        while GPIO.input(self.ECHO) == 0:
-            pulse_start = time.time()
-
-        pulse_end = time.time()
-        while GPIO.input(self.ECHO) == 1:
-            pulse_end = time.time()
-
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
-        return round(distance, 2)
-
-    def distance_monitor(self):
-        #Continuously monitor the distance and update icon opacity."""
-        while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                print(f"Distance: {distance} cm")
-                
-                # Update icon opacity
-                if distance <= 45:
-                    self.update_icon_opacity(1.0)  # Fully opaque
-
-                    # If GIF is not playing, start it
-                    if not self.is_gif_playing:
-                        print("Object detected within 45 cm - Starting GIF")
-                        self.is_gif_playing = True
-                        self.animate_gif(self.gif_image)  # Start playing the GIF
-
-                else:
-                    self.update_icon_opacity(0.0)  # Fully transparent
-
-                    # If GIF is playing, stop it
-                    if self.is_gif_playing:
-                        print("No object within 45 cm - Pausing GIF")
-                        self.is_gif_playing = False
-                        self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
-
-            time.sleep(0.3) 
-
-
-    def update_icon_opacity(self, opacity):
-        """Update the opacity of the icons on the canvas."""
-        if self.add_note_button:
-            self.add_note_button.set_opacity(opacity)  
-        if self.view_schedule_button:
-            self.view_schedule_button.set_opacity(opacity)  
-        if self.view_note_button:
-            self.view_note_button.set_opacity(opacity)
-
 
     def get_user_id(self, frame_id):
         """
@@ -214,30 +166,14 @@ class PhotoFrameApp:
         try:
             response = requests.get(special_user_url)
             response.raise_for_status()
-            user_events = response.json()
-
-            # Find the first event with a story and status
-            self.story = None  # Reset story
-            user_status = None  # Initialize user status variable
-
-            # Find the first event with a story
-            for event in user_events:
-                if event['story']:
-                    self.story = event['story']
-                    break
-
-            if self.story:
-                print(f"Story set: {self.story}")
-            else:
-                print("No story found in user events")
+            self.user_events = response.json()  # Store all events
             
-            if user_status:
-                print(f"User status: {user_status}")
-                # Update LEDs based on the user status
-                self.change_led_based_on_status(user_status)
-            else:
-                print("No status found in user events")
-                self.change_led_based_on_status("")
+            print("Fetched user events:")
+            for event in self.user_events:
+                print(f"Event: {event['event_name']}, Start: {event['start_time']}, End: {event['end_time']}, Story: {event['story']}")
+            
+            # The story will be set in the update_current_event method
+            self.story = None
 
         except requests.RequestException as e:
             print(f"Failed to fetch user events: {str(e)}")
@@ -246,22 +182,18 @@ class PhotoFrameApp:
         except Exception as e:
             print(f"An unexpected error occurred while fetching user events: {str(e)}")
 
-    def change_led_based_on_status(self, status):
-        """Change LED color based on the user's status."""
-        # Turn off all LEDs first
-        GPIO.output(self.LED_RED, GPIO.LOW)
-        GPIO.output(self.LED_YELLOW, GPIO.LOW)
-        GPIO.output(self.LED_GREEN, GPIO.LOW)
-
-        if status == "Chilling":
-            print("Status: Chilling - Turning on Green LED")
-            GPIO.output(self.LED_GREEN, GPIO.HIGH)  # Turn on Green LED
-        elif status == "Occupied":
-            print("Status: Occupied - Turning on Yellow LED")
-            GPIO.output(self.LED_YELLOW, GPIO.HIGH)  # Turn on Yellow LED
-        elif status == "Do not disturb":
-            print("Status: Do not disturb - Turning on Red LED")
-            GPIO.output(self.LED_RED, GPIO.HIGH)  # Turn on Red LED
+        if self.story:
+            print(f"Story set: {self.story}")
+        else:
+            print("No story found in user events")
+        
+        if self.user_status:
+            print(f"User status: {self.user_status}")
+            # Update LEDs based on the user status
+            self.change_led_based_on_status(self.user_status)
+        else:
+            print("No status found in user events")
+            self.change_led_based_on_status("")
 
     def fetch_and_display_image(self):
         """
@@ -278,16 +210,15 @@ class PhotoFrameApp:
         current_time = datetime.now()
         smallest_time_difference = timedelta.max  # Initialize with maximum possible timedelta
 
-        print(f"Current time: {current_time}")
-
         try:
-            # Measure distance once to use for the condition
-            distance = self.measure_distance()
-
-            # Use the story URL if available, otherwise proceed with existing logic
-            if self.story and distance is not None and distance <= 45:
+            # Update current event before fetching image
+            self.update_current_event()
+            
+            # if there is story and the sensor sense someone use the story
+            if self.story and self.current_event and self.measure_distance() <= 45:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
+            # or use the photo with attendee
             else:
                 # Fetch user's events
                 response = requests.get(special_user_url)
@@ -334,6 +265,7 @@ class PhotoFrameApp:
                     print(f"Time Difference: {smallest_time_difference}")
                     print(f"Photo URL: {event_photo}")
                     self.load_and_display_image(event_photo)
+                # if no photo together with the attendee, use the solo photo of the user
                 else:
                     print("\nNo suitable future event photo found. Using fallback URL.")
                     try:
@@ -369,8 +301,7 @@ class PhotoFrameApp:
         Args:
             image_file_name (str): The file name of the image to be displayed.
         """
-        image_url = BASE_URL + image_file_name  # Construct the full URL
-        
+        image_url = BASE_URL + image_file_name  
         try:
             response = requests.get(image_url)
             response.raise_for_status()
@@ -391,6 +322,39 @@ class PhotoFrameApp:
         except Exception as e:
             self.display_error(f"Error loading image: {str(e)}")
 
+    def update_current_event(self):
+        """Update the current_event based on the current time and event times."""
+        current_time = datetime.now()
+        
+        print("\nAll events:")
+        for event in self.user_events:
+            start_time = datetime.strptime(event['start_time'], "%Y-%m-%d %H:%M:%S")
+            end_time = datetime.strptime(event['end_time'], "%Y-%m-%d %H:%M:%S")
+            event_id = event['event_id']
+            event_url = f"https://deco3801-foundjesse.uqcloud.net/restapi/photo_frame_photos.php?event={event_id}"
+            
+            print(f"Event: {event['event_name']}")
+            print(f"  Start: {start_time}")
+            print(f"  End: {end_time}")
+            print(f"  URL: {event_url}")
+            print(f"  Story: {event['story']}")
+            
+            if start_time <= current_time <= end_time:
+                self.current_event = event
+                self.story = event['story']  # Set the story from the current event
+                print("  ** This is the current event **")
+            print()
+
+        if self.current_event:
+            print(f"\nCurrent event: {self.current_event['event_name']}")
+            print(f"Current story: {self.story}")
+        else:
+            print("\nNo current event")
+            self.current_event = None
+            self.story = None
+
+        print(f"Final story value: {self.story}")
+
     def animate_gif(self, image):
         """
         Animate a GIF image on the canvas.
@@ -400,17 +364,16 @@ class PhotoFrameApp:
         """
         frames = []
         try:
-            if not self.gif_frames:
-                for frame in ImageSequence.Iterator(image):
-                    frame = frame.copy()
-                    frame = frame.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
-                    frames.append(ImageTk.PhotoImage(frame))
+            for frame in ImageSequence.Iterator(image):
+                frame = frame.copy()
+                frame = frame.resize((SCREEN_WIDTH, SCREEN_HEIGHT), Image.LANCZOS)
+                frames.append(ImageTk.PhotoImage(frame))
         except Exception as e:
-                print(f"Error processing GIF frames: {str(e)}")
-                return
+            print(f"Error processing GIF frames: {str(e)}")
+            return
 
         def update_frame(frame_num=0):
-            if frame_num < len(frames):
+            if frame_num < len(frames) and self.is_gif_playing:
                 self.canvas.delete("all")  # Clear previous frame
                 self.canvas.create_image(0, 0, anchor='nw', image=frames[frame_num])
                 next_frame = (frame_num + 1) % len(frames)
@@ -418,7 +381,6 @@ class PhotoFrameApp:
             self.add_buttons()  # Ensure buttons are always on top
 
         update_frame(0)
-        return self.gif_animation_id
 
     def display_error(self, message):
         """
@@ -463,12 +425,11 @@ class PhotoFrameApp:
         for child in self.child_windows:
             if child.winfo_exists():
                 child.destroy()
-    
-        # Cleanup GPIO pins
-        GPIO.cleanup()
-
         # Close the main window
         self.root.quit()
+
+        # Cleanup GPIO pins
+        GPIO.cleanup()
 
     def register_child_window(self, window):
         """Register a child window."""
@@ -477,6 +438,83 @@ class PhotoFrameApp:
     def unregister_child_window(self, window):
         """Unregister a child window."""
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
+
+    def measure_distance(self):
+        """Measure the distance using the ultrasonic sensor."""
+        GPIO.output(self.TRIG, False)
+        time.sleep(0.2)
+
+        GPIO.output(self.TRIG, True)
+        time.sleep(0.00001)
+        GPIO.output(self.TRIG, False)
+
+        pulse_start = time.time()
+        while GPIO.input(self.ECHO) == 0:
+            pulse_start = time.time()
+
+        pulse_end = time.time()
+        while GPIO.input(self.ECHO) == 1:
+            pulse_end = time.time()
+
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 17150
+        return round(distance, 2)
+
+    def distance_monitor(self):
+        """Continuously monitor the distance and update icon opacity."""
+        while True:
+            distance = self.measure_distance()
+            if distance is not None:
+                print(f"Distance: {distance} cm")
+                
+                # Update icon opacity
+                if distance <= 45:
+                    self.update_icon_opacity(1.0)  # Fully opaque
+
+                    # If GIF is not playing, start it
+                    if not self.is_gif_playing:
+                        print("Object detected within 45 cm - Starting GIF")
+                        self.is_gif_playing = True
+                        self.animate_gif(self.gif_image)  # Start playing the GIF
+
+                else:
+                    self.update_icon_opacity(0.0)  # Fully transparent
+
+                    # If GIF is playing, stop it
+                    if self.is_gif_playing:
+                        print("No object within 45 cm - Pausing GIF")
+                        self.is_gif_playing = False
+                        self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
+
+            time.sleep(0.3)
+
+    def update_icon_opacity(self, opacity):
+        """Update the opacity of the icons on the canvas."""
+        if self.add_note_button:
+            self.add_note_button.set_opacity(opacity)  
+        if self.view_schedule_button:
+            self.view_schedule_button.set_opacity(opacity)  
+        if self.view_note_button:
+            self.view_note_button.set_opacity(opacity)
+
+    def change_led_based_on_status(self, status):
+        """Change LED color based on the user's status."""
+        # Turn off all LEDs first
+        GPIO.output(self.LED_RED, GPIO.LOW)
+        GPIO.output(self.LED_YELLOW, GPIO.LOW)
+        GPIO.output(self.LED_GREEN, GPIO.LOW)
+
+        if status == "Chilling":
+            print("Status: Chilling - Turning on Green LED")
+            GPIO.output(self.LED_GREEN, GPIO.HIGH)  # Turn on Green LED
+        elif status == "Occupied":
+            print("Status: Occupied - Turning on Yellow LED")
+            GPIO.output(self.LED_YELLOW, GPIO.HIGH)  # Turn on Yellow LED
+        elif status == "Do not disturb":
+            print("Status: Do not disturb - Turning on Red LED")
+            GPIO.output(self.LED_RED, GPIO.HIGH)  # Turn on Red LED
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()

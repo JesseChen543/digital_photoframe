@@ -19,8 +19,6 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from constant import *
 import time
-import RPi.GPIO as GPIO
-import threading
 
 class PhotoFrameApp:
     """
@@ -94,22 +92,6 @@ class PhotoFrameApp:
 
         self.current_event = None
         self.update_current_event()
-
-        # Set up the sensor and start a thread for continuous distance monitoring
-        self.setup_sensor()
-        self.start_sensor_thread()
-
-        # Set GPIO pins for ultrasonic sensor
-        self.TRIG = 17
-        self.ECHO = 27
-
-        # GPIO setup for ultrasonic sensor
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.TRIG, GPIO.OUT)
-        GPIO.setup(self.ECHO, GPIO.IN)
-
-        # Start distance monitoring thread
-        threading.Thread(target=self.distance_monitor, daemon=True).start()
 
     def get_user_id(self, frame_id):
         """
@@ -189,7 +171,7 @@ class PhotoFrameApp:
             self.update_current_event()
             
             # if there is story and the sensor sense someone use the story
-            if self.story and self.current_event and self.measure_distance() < 45:
+            if self.story and self.current_event:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
             # or use the photo with attendee
@@ -410,89 +392,6 @@ class PhotoFrameApp:
         """Unregister a child window."""
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
-    def setup_sensor(self):
-        """Set up the sensor and start a thread for continuous distance monitoring."""
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(TRIG_PIN, GPIO.OUT)
-        GPIO.setup(ECHO_PIN, GPIO.IN)
-
-    def start_sensor_thread(self):
-        """Start a thread for continuous distance monitoring."""
-        self.sensor_thread = threading.Thread(target=self.monitor_distance)
-        self.sensor_thread.daemon = True
-        self.sensor_thread.start()
-
-    def monitor_distance(self):
-        """Monitor the distance continuously."""
-        while True:
-            GPIO.output(TRIG_PIN, True)
-            time.sleep(0.00001)
-            GPIO.output(TRIG_PIN, False)
-            pulse_start = time.time()
-            pulse_end = time.time()
-            pulse_duration = 0
-
-            while GPIO.input(ECHO_PIN) == 0:
-                pulse_start = time.time()
-
-            while GPIO.input(ECHO_PIN) == 1:
-                pulse_end = time.time()
-                pulse_duration = pulse_end - pulse_start
-
-            distance = round((pulse_duration * 17150), 2)
-
-            if distance < 10:
-                print("Object Detected")
-                self.update_current_event()
-                self.fetch_and_display_image()
-            else:
-                print("No Object Detected")
-
-            time.sleep(0.1)
-
-    def measure_distance(self):
-        """Measure the distance using the ultrasonic sensor."""
-        GPIO.output(self.TRIG, False)
-        time.sleep(0.2)
-
-        GPIO.output(self.TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(self.TRIG, False)
-
-        pulse_start = time.time()
-        while GPIO.input(self.ECHO) == 0:
-            pulse_start = time.time()
-
-        pulse_end = time.time()
-        while GPIO.input(self.ECHO) == 1:
-            pulse_end = time.time()
-
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
-        return round(distance, 2)
-
-    def distance_monitor(self):
-        """Continuously monitor the distance and update the display accordingly."""
-        while True:
-            distance = self.measure_distance()
-            if distance is not None:
-                print(f"Distance: {distance} cm")
-                
-                if distance <= 45:  # Adjust this threshold as needed
-                    self.root.after(0, self.update_display)
-                else:
-                    self.root.after(0, self.hide_display)
-            
-            time.sleep(0.5)  # Adjust the delay as needed
-
-    def update_display(self):
-        """Update the display when someone is detected."""
-        self.fetch_and_display_image()
-
-    def hide_display(self):
-        """Hide the display when no one is detected."""
-        self.canvas.delete("all")
-        self.canvas.configure(bg="black")
 
 
 if __name__ == "__main__":
