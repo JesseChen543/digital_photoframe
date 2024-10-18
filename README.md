@@ -4,3 +4,4 @@ Insync Photoframe is a python-based digital photoframe application that is desig
 
 # Requirements
  - **Hardware:**
+   - Raspberry Pi with GPIO support
