@@ -100,6 +100,9 @@ class PhotoFrameApp:
 
         # Fetch user events and set the story
         self.fetch_user_events()
+
+        self.is_gif_playing = False  # Initialize GIF playing state
+        self.gif_animation_id = None  # Initialize GIF animation ID
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
@@ -136,25 +139,25 @@ class PhotoFrameApp:
             distance = self.measure_distance()
             if distance is not None:
                 print(f"Distance: {distance} cm")
+                
                 # Update icon opacity
                 if distance <= 45:
                     self.update_icon_opacity(1.0)  # Fully opaque
 
                     # If GIF is not playing, start it
-                if not self.is_gif_playing:
-                    print("Object detected within 45 cm - Starting GIF")
-                    self.is_gif_playing = True
-                    self.animate_gif(self.gif_image)  # Start playing the GIF
-
+                    if not self.is_gif_playing:
+                        print("Object detected within 45 cm - Starting GIF")
+                        self.is_gif_playing = True
+                        self.animate_gif(self.gif_image)  # Start playing the GIF
 
                 else:
                     self.update_icon_opacity(0.0)  # Fully transparent
 
                     # If GIF is playing, stop it
-                if self.is_gif_playing:
-                    print("No object within 45 cm - Pausing GIF")
-                    self.is_gif_playing = False
-                    self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
+                    if self.is_gif_playing:
+                        print("No object within 45 cm - Pausing GIF")
+                        self.is_gif_playing = False
+                        self.root.after_cancel(self.gif_animation_id)  # Stop the GIF animation
 
             time.sleep(0.3) 
 
@@ -415,6 +418,7 @@ class PhotoFrameApp:
             self.add_buttons()  # Ensure buttons are always on top
 
         update_frame(0)
+        return self.gif_animation_id
 
     def display_error(self, message):
         """
