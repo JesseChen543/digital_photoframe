@@ -20,6 +20,16 @@ from constant import *
 import time
 import RPi.GPIO as GPIO
 import threading
+import sys
+import traceback
+
+
+def log_error(error_message):
+    with open('error_log.txt', 'a') as f:
+        f.write(f"{datetime.now()}: {error_message}\n")
+
+# Redirect stderr to the log file
+sys.stderr = open('error_log.txt', 'a')
 
 class PhotoFrameApp:
     """
@@ -60,17 +70,8 @@ class PhotoFrameApp:
         # Initialize story property
         self.story = None
         
-        # Initialize user_events as an empty list
-        self.user_events = []
-
-        # Initialize current_event
-        self.current_event = None
-
         # Fetch user events and set the story
         self.fetch_user_events()
-
-        # Update current event
-        self.update_current_event()
 
         # Initialize saved inputs
         self.saved_notes = []
@@ -99,6 +100,9 @@ class PhotoFrameApp:
 
         # Bind the closing event
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
+
+        self.current_event = None
+        self.update_current_event()
 
         # GPIO setup for LEDs
         self.LED_RED = 12    # GPIO pin for Red LED
