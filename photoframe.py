@@ -210,7 +210,7 @@ class PhotoFrameApp:
             self.update_current_event()
             
             # if there is story and the sensor sense someone use the story
-            if self.story and self.current_event:
+            if self.story and self.current_event and self.measure_distance() < 45:
                 print(f"Using story URL: {self.story}")
                 self.load_and_display_image(self.story)
             # or use the photo with attendee
