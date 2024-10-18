@@ -22,6 +22,7 @@ import time
 import threading
 import RPi.GPIO as GPIO
 import sys
+import os
 
 class CanvasButton:
     def __init__(self, canvas, x, y, image_path, command, initial_opacity=0):
@@ -119,9 +120,13 @@ class PhotoFrameApp:
         
         # Bind the Escape key to quit the application
         self.root.bind('<Escape>', self.quit_app)
-
-        # Bind the closing event
+        
+        # Also bind to the window's close button
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
+
+        # Create a "Quit" button
+        quit_button = tk.Button(root, text="Quit", command=self.quit_app)
+        quit_button.pack(side="bottom", pady=10)
 
         # Start the distance measuring thread
         self.distance_thread = threading.Thread(target=self.distance_monitor)
@@ -447,14 +452,11 @@ class PhotoFrameApp:
             if child.winfo_exists():
                 child.destroy()
 
-        # Stop any running threads (if you have any)
-        # self.stop_threads()  # Uncomment and implement if you have threads to stop
-
         # Destroy the root window
         self.root.destroy()
 
-        # Exit the Python interpreter
-        sys.exit()
+        # Force exit the Python interpreter
+        os._exit(0)
 
     def register_child_window(self, window):
         """Register a child window."""
@@ -490,11 +492,11 @@ class PhotoFrameApp:
         while True:
             try:
                 distance = self.measure_distance()
+                print(distance)
                 if distance is not None:
                     print(f"Distance: {distance} cm")
                     # Update icon opacity based on distance
-                    # if distance <= 45:
-                    if True:
+                    if distance <= 45:
                         self.update_icon_opacity(1.0)  # Fully opaque
                     else:
                         self.update_icon_opacity(0.0)  # Fully transparent
