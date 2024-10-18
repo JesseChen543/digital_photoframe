@@ -1,2 +1,2 @@
-# digital_photoframe
- 
+# Digital Photoframe
+
