@@ -21,7 +21,7 @@ from constant import *
 import time
 import threading
 import RPi.GPIO as GPIO
-import random  # Add this import at the top of your file
+import sys
 
 class CanvasButton:
     def __init__(self, canvas, x, y, image_path, command, initial_opacity=0):
@@ -131,9 +131,6 @@ class PhotoFrameApp:
         # Start the periodic update thread
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
-
-        self.use_real_sensor = False  # Set this to True when the real sensor is working
-        self.simulated_distance = 100  # Start with a simulated distance of 100 cm
 
     def get_user_id(self, frame_id):
         """
@@ -438,13 +435,26 @@ class PhotoFrameApp:
             )
 
     def quit_app(self, event=None):
-        """Quit the application and close all child windows."""
+        """Quit the application and clean up resources."""
+        print("Exiting application...")
+        try:
+            GPIO.cleanup()  # Clean up GPIO on exit
+        except:
+            pass  # If GPIO is not initialized or available, just pass
+
         # Close all child windows
         for child in self.child_windows:
             if child.winfo_exists():
                 child.destroy()
-        # Close the main window
-        self.root.quit()
+
+        # Stop any running threads (if you have any)
+        # self.stop_threads()  # Uncomment and implement if you have threads to stop
+
+        # Destroy the root window
+        self.root.destroy()
+
+        # Exit the Python interpreter
+        sys.exit()
 
     def register_child_window(self, window):
         """Register a child window."""
@@ -455,49 +465,30 @@ class PhotoFrameApp:
         self.child_windows = [w for w in self.child_windows if w != window and w.winfo_exists()]
 
     def measure_distance(self):
-        """Measure the distance using the ultrasonic sensor or simulate it."""
-        if self.use_real_sensor:
-            try:
-                # Real sensor code (keep your existing implementation)
-                GPIO.output(TRIG, False)
-                time.sleep(0.1)  # Reduced from 2 seconds to 0.1 seconds for faster response
+        """Measure the distance using the ultrasonic sensor."""
+        GPIO.output(TRIG, False)
+        time.sleep(2)
 
-                GPIO.output(TRIG, True)
-                time.sleep(0.00001)
-                GPIO.output(TRIG, False)
+        GPIO.output(TRIG, True)
+        time.sleep(0.00001)
+        GPIO.output(TRIG, False)
 
-                pulse_start = time.time()
-                timeout = pulse_start + 0.1  # 100ms timeout
-                while GPIO.input(ECHO) == 0 and time.time() < timeout:
-                    pulse_start = time.time()
+        pulse_start = time.time()
+        while GPIO.input(ECHO) == 0:
+            pulse_start = time.time()
 
-                pulse_end = time.time()
-                timeout = pulse_end + 0.1  # 100ms timeout
-                while GPIO.input(ECHO) == 1 and time.time() < timeout:
-                    pulse_end = time.time()
+        pulse_end = time.time()
+        while GPIO.input(ECHO) == 1:
+            pulse_end = time.time()
 
-                pulse_duration = pulse_end - pulse_start
-                distance = pulse_duration * 17150
-                return round(distance, 2)
-            except Exception as e:
-                print(f"Error reading sensor: {str(e)}")
-                return None
-        else:
-            # Simulated sensor
-            return self.simulated_distance
-
-    def simulate_movement(self):
-        """Simulate random movement for testing."""
-        movement = random.choice([-10, -5, 0, 5, 10])
-        self.simulated_distance = max(0, min(200, self.simulated_distance + movement))
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 17150
+        return round(distance, 2)
 
     def distance_monitor(self):
         """Continuously monitor the distance and update icon opacity."""
         while True:
             try:
-                if not self.use_real_sensor:
-                    self.simulate_movement()
-                
                 distance = self.measure_distance()
                 if distance is not None:
                     print(f"Distance: {distance} cm")
@@ -526,20 +517,10 @@ class PhotoFrameApp:
         # Force update of the canvas
         self.canvas.update_idletasks()
 
-    def toggle_sensor_simulation(self):
-        """Toggle between real sensor and simulated data."""
-        self.use_real_sensor = not self.use_real_sensor
-        print(f"Using {'real' if self.use_real_sensor else 'simulated'} sensor data.")
-
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.overrideredirect(True)  # Remove window decorations
     root.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}+0+0")  # Set full screen size
     app = PhotoFrameApp(root)
-    
-    # Add a button to toggle sensor simulation (for testing purposes)
-    toggle_button = tk.Button(root, text="Toggle Sensor Simulation", command=app.toggle_sensor_simulation)
-    toggle_button.pack()
-
     root.mainloop()  # Make sure this line is here
