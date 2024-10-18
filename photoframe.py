@@ -108,59 +108,67 @@ class PhotoFrameApp:
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
         # Start the distance measuring thread
-        # self.distance_thread = threading.Thread(target=self.distance_monitor)
-        # self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
-        # self.distance_thread.start()
+        self.distance_thread = threading.Thread(target=self.distance_monitor)
+        self.distance_thread.daemon = True  # Ensure the thread exits when the main program exits
+        self.distance_thread.start()
 
         # Start the periodic update thread
         self.update_thread = threading.Thread(target=self.update_data_periodically, daemon=True)
         self.update_thread.start()
 
-    # def measure_distance(self):
-    #     """Measure the distance using the ultrasonic sensor."""
-    #     GPIO.output(TRIG, False)
-    #     time.sleep(2)
+        # Print screen dimensions for debugging
+        print(f"Screen dimensions: {self.screen_width}x{self.screen_height}")
 
-    #     GPIO.output(TRIG, True)
-    #     time.sleep(0.00001)
-    #     GPIO.output(TRIG, False)
+    def measure_distance(self):
+        """Measure the distance using the ultrasonic sensor."""
+        try:
+            GPIO.output(TRIG, False)
+            time.sleep(0.1)  # Reduced sleep time
 
-    #     pulse_start = time.time()
-    #     while GPIO.input(ECHO) == 0:
-    #         pulse_start = time.time()
+            GPIO.output(TRIG, True)
+            time.sleep(0.00001)
+            GPIO.output(TRIG, False)
 
-    #     pulse_end = time.time()
-    #     while GPIO.input(ECHO) == 1:
-    #         pulse_end = time.time()
+            pulse_start = time.time()
+            timeout = pulse_start + 0.1  # Set a timeout
+            while GPIO.input(ECHO) == 0 and time.time() < timeout:
+                pulse_start = time.time()
 
-    #     pulse_duration = pulse_end - pulse_start
-    #     distance = pulse_duration * 17150
-    #     return round(distance, 2)
+            pulse_end = time.time()
+            timeout = pulse_end + 0.1  # Set a timeout
+            while GPIO.input(ECHO) == 1 and time.time() < timeout:
+                pulse_end = time.time()
 
-    # def distance_monitor(self):
-    #     """Continuously monitor the distance and update icon opacity."""
-    #     while True:
-    #         distance = self.measure_distance()
-    #         if distance is not None:
-    #             print(f"Distance: {distance} cm")
-    #             # Update icon opacity based on distance
-    #             if distance <= 45:
-    #                 self.update_icon_opacity(1.0)  # Fully opaque
-    #             else:
-    #                 self.update_icon_opacity(0.0)  # Fully transparent
-    #         time.sleep(0.3)  # Adjust the sleep time as needed
+            pulse_duration = pulse_end - pulse_start
+            distance = pulse_duration * 17150
+            return round(distance, 2)
+        except Exception as e:
+            print(f"Error measuring distance: {str(e)}")
+            return None
 
-    # def update_icon_opacity(self, opacity):
-    #     """Update the opacity of the icons on the canvas."""
-    #     # You can adjust the opacity by changing the alpha channel of the images.
-    #     # Note: Actual implementation will depend on how you have defined and handled the icons.
-    #     # Here, we'll assume you can change their opacity based on some logic.
-    #     if self.add_note_button:
-    #         self.add_note_button.set_opacity(opacity)  # Placeholder function
-    #     if self.view_schedule_button:
-    #         self.view_schedule_button.set_opacity(opacity)  # Placeholder function
-    #     if self.view_note_button:
-    #         self.view_note_button.set_opacity(opacity)  # Placeholder function
+    def distance_monitor(self):
+        """Continuously monitor the distance and update icon opacity."""
+        while True:
+            distance = self.measure_distance()
+            if distance is not None:
+                # print(f"Distance: {distance} cm")  # Comment out for less console output
+                if distance <= 45:
+                    self.root.after(0, self.update_icon_opacity, 1.0)
+                else:
+                    self.root.after(0, self.update_icon_opacity, 0.0)
+            time.sleep(0.5)  # Increased sleep time
+
+    def update_icon_opacity(self, opacity):
+        """Update the opacity of the icons on the canvas."""
+        try:
+            if self.add_note_button:
+                self.add_note_button.set_opacity(opacity)
+            if self.view_schedule_button:
+                self.view_schedule_button.set_opacity(opacity)
+            if self.view_note_button:
+                self.view_note_button.set_opacity(opacity)
+        except Exception as e:
+            print(f"Error updating icon opacity: {str(e)}")
 
     def get_user_id(self, frame_id):
         """
